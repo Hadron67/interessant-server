@@ -1,0 +1,354 @@
+<html>
+<head>
+	<title>低趣百科管理系统</title>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+	<style type="text/css">
+		body {
+			padding-top: 60px;
+			padding-bottom: 40px;
+		}
+		
+		.sidebar-nav {
+			padding: 9px 0;
+		}
+		
+		textarea {
+			width: 100%;
+			display: block;
+		}
+		
+		@media (max-width: 980px) {
+			div#main-container {
+				padding: 0px;
+			}
+		}
+		
+		@media (max-width: 980px) {
+			/* Enable use of floated navbar text */
+			.navbar-text.pull-right {
+				float: none;
+				padding-left: 5px;
+				padding-right: 5px;
+			}
+		}
+	</style>
+</head>
+
+<body>
+
+	<nav class="navbar navbar-inverse navbar-fixed-top">
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false"
+				aria-controls="navbar">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="#">低趣百科</a>
+			</div>
+			<div id="navbar" class="navbar-collapse collapse">
+				<ul class="nav navbar-nav navbar-left">
+					<li class="active"><a href="/index.html" id='link-wiki'>wiki</a></li>
+					<li><a href="/edit.html">编辑</a></li>
+					<li><a href="#">资源文件</a></li>
+					<li><a href="#">控制</a></li>
+				</ul>
+				<div class="dropdown pull-right">
+					<p class="navbar-text pull-right" id="user-info">
+						<!--Logged in as <a href="#" class="navbar-link">Username</a>-->
+						<a href="/login.html" class="navbar-link">未登录</a>
+					</p>
+					<ul class="dropdown-menu" aria-labelledby="user-name">
+						<li><a id="link-logout" href="#">退出登录</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</nav>
+
+	<div class="container-fluid">
+		<div class="col-md-2 well">
+			<ul class="nav nav-pills nav-stacked">
+				<li role="presentation" class="active"><a href="#words" data-toggle="tab">词条</a></li>
+				<li role="presentation"><a href="#pages" data-toggle="tab">页面</a></li>
+				<li role="presentation"><a href="#redir" data-toggle="tab">重定向</a></li>
+				<!--<li role="presentation"><a href="#" data-toggle="tab">消歧义</a></li>-->
+			</ul>
+		</div>
+		<div class="col-md-9 tab-content" id="main-container">
+			<div class="tab-pane fade in active container-fluid" id="words">
+
+
+				<div class="row">
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<div class="container-fluid">
+								<!--<div class="col-md-2" id="words-count">
+									<p class="navbar-text" id="words-count"></p>
+								</div>-->
+								<div class="col-md-6 col-xs-12 pull-right" style="padding-right:0px;">
+									<div class="input-group">
+										<input type="text" class="form-control" placeholder="搜索词条" id="search-word-form">
+										<span class="input-group-btn">
+											<button class="btn btn-default" type="button" id="btn-search-words">搜索</button>
+										</span>
+									</div>
+									<!-- /input-group -->
+								</div>
+							</div>
+
+						</div>
+						<div class="panel-body">
+							<div class="row err-msg-container" id="words-container">
+								正在加载。。
+							</div>
+						</div>
+						<div class="panel-footer">
+							<button id="btn-newword" type="button" class="btn btn-primary">新建词条</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="tab-pane fade" id="pages">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						页面,用得相对较少,一般只用主页。
+					</div>
+					<div class="panel-body">
+						<div class="list-group err-msg-container" id="pages-list">
+							<!--<button type="button" class="list-group-item" href="#">主页</button>-->
+							正在加载。。。
+						</div>
+					</div>
+					<div class="panel-footer">
+						<button id="btn-newpage" type="button" class="btn btn-primary">新建页面</button>
+					</div>
+				</div>
+			</div>
+
+			<div class="tab-pane fade" id="redir">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<div class="container-fluid">
+						<div class="col-md-6 col-xs-12 pull-right" style="padding-right:0px;">
+							<div class="input-group">
+								<input type="text" class="form-control" placeholder="搜索词条" id="search-redir-form">
+								<span class="input-group-btn">
+									<button class="btn btn-default" type="button">搜索</button>
+								</span>
+							</div>
+							<!-- /input-group -->
+						</div>
+						</div>
+					</div>
+					<div class="panel-body">
+						<div class="list-group err-msg-container" id="redir-list">
+							<div class="table-responsive">
+
+								<table class="table table-striped" id="table-redir-list">
+									<tr>
+										<th>被重定向词条</th>
+										<th>目标词条</th>
+									</tr>
+								</table>
+							</div>
+							<!--正在加载。。。-->
+						</div>
+					</div>
+					<div class="panel-footer">
+						<button type="button" class="btn btn-primary">新重定向项</button>
+					</div>
+				</div>
+			</div>
+
+		</div>
+
+		<!-- dialogues -->
+		<div class="modal fade" id="diag-newword">
+			<div class="modal-dialog">
+				<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title">新建词条</h4>
+				</div>
+				<div class="modal-body">
+					<input id="newword" type="text" class="form-control" placeholder="词条名" />
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+					<button id="btn-newword-confirm" type="button" class="btn btn-primary">新建</button>
+				</div>
+				</div><!-- /.modal-content -->
+			</div><!-- /.modal-dialog -->
+		</div><!-- /.modal -->
+
+		<div class="modal fade" id="diag-newpage">
+			<div class="modal-dialog">
+				<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title">新建页面</h4>
+				</div>
+				<div class="modal-body">
+					<input id="newpage" type="text" class="form-control" placeholder="页面名称" />
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+					<button id="btn-newpage-confirm" type="button" class="btn btn-primary">新建</button>
+				</div>
+				</div><!-- /.modal-content -->
+			</div><!-- /.modal-dialog -->
+		</div><!-- /.modal -->
+
+		<div class="modal fade" id="diag-err">
+			<div class="modal-dialog">
+				<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title">错误</h4>
+				</div>
+				<div class="modal-body err-container">
+					出错了，请刷新页面
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+				</div>
+				</div><!-- /.modal-content -->
+			</div><!-- /.modal-dialog -->
+		</div><!-- /.modal -->
+
+		<script src="js/jquery.min.js"></script>
+		<script src="js/bootstrap.min.js"></script>
+		<script src="js/mgr.js"></script>
+		<script>
+			var editing = {
+				otext: '',
+				id: null
+			};
+			Wikim.getUser(function(){
+				Wikim.getAllWords(function(){
+					function wordslinks(){
+						$('.words-item').click(function(){
+							var a = $(this);
+							$.post('/edit',{
+								type : 'word',
+								data : a.html()
+							},function(result){
+								var res = $.parseJSON(result);
+								if(res.success != 0){
+									window.location.href = '/edit.html';
+								}
+								
+							});
+						});
+					}
+					$('#user-name').click(function(){
+						$('#user-info').dropdown('toggle');
+					});
+					wordslinks();
+
+					$('#btn-search-words').click(function(){
+						Wikim.searchWords($('#search-word-form').val());
+						wordslinks();
+					});
+					$('#link-logout').click(function(){
+						$.post('/logout',{},function(result){
+							result = $.parseJSON(result);
+							if(result.success != 0){
+								window.location.href = '/login.html';
+							}
+						});
+					});
+					$('#search-word-form').on('input',function(){
+						Wikim.searchWords($(this).val());
+						wordslinks();
+					});
+					$('#btn-newword').click(function(){
+						$('#diag-newword').modal('show');
+					});
+					$('#btn-newword-confirm').click(function(){
+						//alert(6456);
+						$('#diag-newword').modal('hide');
+						$.post('/new',{
+							type: 'word',
+							data: $('#newword').val()
+						},function(result){
+							result = $.parseJSON(result);
+							if(result.success != 0){
+								window.location.href = '/edit.html';
+							}
+							else{
+								$('.err-container').html(result.msg);
+								$('#diag-err').modal('show');
+							}
+						});
+					});
+				});
+				Wikim.getAllPages(function(){
+					$('.pages-button').click(function(e){
+						var a = $(this);
+						$.post('/edit',{
+							type : 'page',
+							data : a.html()
+						},function(result){
+							var res = $.parseJSON(result);
+							if(res.success){
+								window.location.href = '/edit.html';
+							}
+						});
+					});
+					$('#btn-newpage').click(function(){
+						$('#diag-newpage').modal('show');
+					});
+					$('#btn-newpage-confirm').click(function(){
+						$('#diag-newpage').modal('hide');
+						$.post('/new',{
+							type : 'page',
+							data : $('#newpage').val()
+						},function(result){
+							var res = $.parseJSON(result);
+							if(res.success != 0){
+								window.location.href = '/edit.html';
+							}
+							else{
+								$('.err-container').html(res.msg);
+								$('#diag-err').modal('show');
+							}
+						});
+					});
+				});
+				Wikim.getAllredir(function(){
+					$('.redir-key').click(function(){
+						if($(this).attr('id') !== editing.id){
+							$('#editing-redir-container').parent().html(editing.otext);
+							editing.otext = $(this).html();
+							editing.id = $(this).attr('id');
+							//$(this).html('<div id="editing-redir-container" class="input-group"><input class="form-control" id="editing-redir" type="text" value="' + editing.otext + '"/><span class="input-group-btn"><button type="button" class="btn btn-primary" id="btn-redir-commit">提交</button></span></div>');
+							//$(this).html('<div id="editing-redir-container"><input class="form-control" id="editing-redir" type="text" value="' + editing.otext + '"/><button type="button" class="btn btn-primary" id="btn-redir-commit">提交</button></div>');
+							$(this).html('<div id="editing-redir-container" class="input-group"><input class="form-control" id="editing-redir" type="text" value="' + editing.otext + '"/><span class="input-group-btn"><button type="button" class="btn btn-primary" id="btn-redir-commit">提交</button></span></div>');
+
+						}
+					});
+					$('.redir-value').click(function(){
+						if($(this).attr('id') !== editing.id){
+							$('#editing-redir-container').parent().html(editing.otext);
+							editing.otext = $(this).html();
+							editing.id = $(this).attr('id');
+							$(this).html('<div id="editing-redir-container" class="input-group"><input class="form-control" id="editing-redir" type="text" value="' + editing.otext + '"/><span class="input-group-btn"><button type="button" class="btn btn-primary" id="btn-redir-commit">提交</button></span></div>');
+						}
+					});
+				});
+			}).error(function(e){
+				$('.err-container').html('网络貌似锁尔了');
+				$('#diag-err').modal('show');
+			});
+		</script>
+</body>
+
+</html>

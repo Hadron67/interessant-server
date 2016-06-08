@@ -1,0 +1,228 @@
+<html>
+
+<head>
+	<title>低趣百科管理系统</title>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+	<style type="text/css">
+		body {
+			padding-top: 60px;
+			padding-bottom: 40px;
+		}
+		
+		.sidebar-nav {
+			padding: 9px 0;
+		}
+		
+		textarea {
+			width: 100%;
+			display: block;
+		}
+		
+		@media (max-width: 980px) {
+			/* Enable use of floated navbar text */
+			.navbar-text.pull-right {
+				float: none;
+				padding-left: 5px;
+				padding-right: 5px;
+			}
+		}
+	</style>
+</head>
+
+<body>
+
+	<nav class="navbar navbar-inverse navbar-fixed-top">
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false"
+				aria-controls="navbar">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="#">低趣百科</a>
+			</div>
+			<div id="navbar" class="navbar-collapse collapse">
+				<ul class="nav navbar-nav navbar-left">
+					<li><a href="/index.html" id='link-wiki'>wiki</a></li>
+					<li class="active"><a href="#">编辑</a></li>
+					<li><a href="#">资源文件</a></li>
+					<li><a href="#">控制</a></li>
+				</ul>
+				<div class="dropdown pull-right">
+					<p class="navbar-text pull-right" id="user-info">
+						<!--Logged in as <a href="#" class="navbar-link">Username</a>-->
+						<a href="/login.html" class="navbar-link">未登录</a>
+					</p>
+					<ul class="dropdown-menu" aria-labelledby="user-name">
+						<li><a id="link-logout" href="#">退出登录</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</nav>
+
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-md-12">
+				<div class="panel panel-default">
+					<div class="panel-body">
+						<div class="row" style="padding-bottom:10px;">
+							<div class="col-md-12">
+								<ul class="nav nav-tabs" id="file-list">
+									<li role="presentation" class="active">
+										<a href="#aaa" data-toggle="tab">
+												默认标签
+											</a>
+									</li>
+								</ul>
+							</div>
+						</div>
+
+						<div class="tab-content err-msg-container" id="file-content">
+							<div class="container-fluid tab-pane fade in active" id="bbb">
+								<div class="row">
+									<div contenteditable="true">加载中。。。</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="panel-footer">
+						<button type="button" class="btn btn-default">预览</button>
+						<button type="button" class="btn btn-default" id="btn-close">关闭</button>
+						<button type="button" class="btn btn-primary" id="btn-save">保存</button>
+						<button type="button" class="btn btn-primary" id="btn-commit">提交</button>
+						<button type="button" class="btn btn-danger pull-right" id="btn-delete">删除</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="diag-delete-confirm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+					<h4 class="modal-title" id="myModalLabel">确认删除</h4>
+				</div>
+				<div class="modal-body" id="delete-confirm-msg">
+					确认删除词条“锁尔”？注意，此操作不可逆。
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+					<button type="button" class="btn btn-danger" id="btn-delete-confirm">确认删除</button>
+				</div>
+			</div>
+			<!-- /.modal-content -->
+		</div>
+		<!-- /.modal-dialog -->
+	</div>
+	<!-- /.modal -->
+
+	<script src="js/jquery.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<script src="js/mgr.js"></script>
+	<script>
+		Wikim.getUser(function(result){
+				if(result.success != 0){
+					$('#user-name').click(function(){
+						$('#user-info').dropdown('toggle');
+					});
+					$('#link-logout').click(function(){
+						$.post('/logout',{},function(result){
+							result = $.parseJSON(result);
+							if(result.success != 0){
+								window.location.href = '/login.html';
+							}
+						});
+					});
+					Wikim.getDrafts(function(result){
+						if(result.success != 0){
+							initEvent();
+						}
+						else
+							$('.err-msg-container').html(result.msg);
+					});
+				}
+				else{
+					$('.err-msg-container').html(result.msg);
+				}
+			});
+			
+			function initEvent(){
+				$('#btn-save').click(function(){
+					var index = $('#file-list .active a').attr('data-index');
+					var content = $('#file-content' + index).val();
+					$.post('/updatedraft',{
+						type : Wikim.drafts[index].type,
+						identifier : Wikim.drafts[index].identifier,
+						content : content
+					},function(result){
+						result = $.parseJSON(result);
+						if(result.success){
+							alert('success');
+						}
+					});
+				});
+				$('#btn-close').click(function(){
+					var index = $('#file-list .active a').attr('data-index');
+					$.post('/closedraft',{
+						type : Wikim.drafts[index].type,
+						identifier : Wikim.drafts[index].identifier
+					},function(result){
+						result = $.parseJSON(result);
+						if(result.success){
+							Wikim.getDrafts();
+						}
+					});
+				});
+				$('#btn-commit').click(function(){
+					var index = $('#file-list .active a').attr('data-index');
+					var content = $('#file-content' + index).val();
+					$.post('/commitdraft',{
+						type : Wikim.drafts[index].type,
+						identifier : Wikim.drafts[index].identifier,
+						content : content
+					},function(result){
+						result = $.parseJSON(result);
+						if(result.success){
+							alert('success');
+						}
+					});
+				});
+				$('#btn-delete').click(function(){
+					var index = $('#file-list .active a').attr('data-index');
+					var t = '';
+					if(Wikim.drafts[index].type == 'word'){
+						t = '词条';
+					}
+					else if(Wikim.drafts[index].type == 'page'){
+						t = '页面';
+					}
+					$('#delete-confirm-msg').html('确认删除' + t + '“' + Wikim.drafts[index].identifier + '”？注意，此操作不可逆');
+					$('#diag-delete-confirm').modal('show');
+				});
+				$('#btn-delete-confirm').click(function(){
+					$('#diag-delete-confirm').modal('hide');
+					var index = $('#file-list .active a').attr('data-index');
+					$.post('/delete',{
+						type : Wikim.drafts[index].type,
+						identifier : Wikim.drafts[index].identifier,
+					},function(result){
+						result = $.parseJSON(result);
+						if(result.success != 0){
+							Wikim.getDrafts();
+						}
+					});
+				});
+			}
+			
+	</script>
+</body>
+
+</html>
