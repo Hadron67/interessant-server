@@ -55,8 +55,8 @@
 				<ul class="nav navbar-nav navbar-left">
 					<li class="active"><a href="/index.html" id='link-wiki'>wiki</a></li>
 					<li><a href="/edit.html">编辑</a></li>
-					<li><a href="#">资源文件</a></li>
-					<li><a href="#">控制</a></li>
+					<li><a href="/resources.html">资源文件</a></li>
+					<li><a href="/controls.html">控制</a></li>
 				</ul>
 				<div class="dropdown pull-right">
 					<p class="navbar-text pull-right" id="user-info">
@@ -239,8 +239,7 @@
 							$.post('/edit',{
 								type : 'word',
 								data : a.html()
-							},function(result){
-								var res = $.parseJSON(result);
+							},function(res){
 								if(res.success != 0){
 									window.location.href = '/edit.html';
 								}
@@ -259,7 +258,6 @@
 					});
 					$('#link-logout').click(function(){
 						$.post('/logout',{},function(result){
-							result = $.parseJSON(result);
 							if(result.success != 0){
 								window.location.href = '/login.html';
 							}
@@ -279,7 +277,6 @@
 							type: 'word',
 							data: $('#newword').val()
 						},function(result){
-							result = $.parseJSON(result);
 							if(result.success != 0){
 								window.location.href = '/edit.html';
 							}
@@ -296,8 +293,7 @@
 						$.post('/edit',{
 							type : 'page',
 							data : a.html()
-						},function(result){
-							var res = $.parseJSON(result);
+						},function(res){
 							if(res.success){
 								window.location.href = '/edit.html';
 							}
@@ -312,7 +308,6 @@
 							type : 'page',
 							data : $('#newpage').val()
 						},function(result){
-							var res = $.parseJSON(result);
 							if(res.success != 0){
 								window.location.href = '/edit.html';
 							}

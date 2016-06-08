@@ -1,0 +1,5 @@
+{
+    "port" : "8787",
+	"root" : "./www",
+    "defaultFile" : "index.html"
+}

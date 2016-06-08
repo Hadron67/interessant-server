@@ -4,8 +4,10 @@ var http = require('http');
 var url = require('url');
 var fs = require('fs');
 var path = require('path');
-var wmgr = require('./wikimgr.js');
 var qs = require('querystring');
+var crypto = require('crypto');
+
+var wmgr = require('./wikimgr.js');
 
 var contentTypes = {
   ".css": "text/css",
@@ -30,11 +32,12 @@ var contentTypes = {
 };
 
 var Server = function(){
-	this.config = {
-		port : 8080,
-		root : './www',
-    defaultFile : 'index.html'
-	};
+	// this.config = {
+	// 	port : 8080,
+	// 	root : './www',
+  //   defaultFile : 'index.html'
+	// };
+  this.config = JSON.parse(fs.readFileSync('config.json','utf-8'));
   this.DB = new wmgr.WikiDB();
   this.DB.open();
   this._sessions = {};
@@ -62,7 +65,7 @@ var Server = function(){
             fs.readFile(realpath,'binary',function(err,file){
               if(err){
                 response.writeHead(500, {
-                  'Content-Type': 'text/plain'
+                  'Content-Type': 'text/plain',
                 });
                 response.write('internal erreur:\n' + err);
                 response.end();
@@ -80,10 +83,15 @@ var Server = function(){
         break;
       case 'POST':
         var a = '';
+        var cookies = {};
+        request.headers.cookie && request.headers.cookie.split(';').forEach(function( Cookie ) {
+            var parts = Cookie.split('=');
+            cookies[ parts[ 0 ].trim() ] = ( parts[ 1 ] || '' ).trim();
+        });
         request.addListener('data',function(pdata){
           a += pdata;
         }).addListener('end',function(pdata){
-          parent.doPost(pathname,request.connection.remoteAddress,qs.parse(a),response);
+          parent.doPost(pathname,cookies,qs.parse(a),response);
         });
         console.log('post:' + pathname);
         break;
@@ -95,7 +103,38 @@ Server.prototype.start = function(){
 	console.log('start listening at port ' + this.config.port);
 }
 
-Server.prototype.doPost = function (pname,addr,data,response){
+Server.prototype.doPost = function (pname,cookies,data,response){
+  var addr = cookies['SSID'] || '';
+  var parent = this;
+  function writeResponseWithCookie(cookie,obj){
+    response.writeHead(200,{
+      'Content-Type': 'application/json',
+      'Set-Cookie': cookie + 'HttpOnly'
+    });
+    response.write(JSON.stringify(obj),'utf-8');
+    response.end();
+  }
+  function writeResponse(obj){
+    response.writeHead(200,{
+      'Content-Type': 'application/json'
+    });
+    response.write(JSON.stringify(obj),'utf-8');
+    response.end();
+  }
+  function writeErrResponse(msg){
+    response.writeHead(200,{
+      'Content-Type': 'application/json'
+    });
+    response.write('{"success":"0","msg":"' + msg + '"}','utf-8');
+    response.end();
+  }
+  function writeOkResponse(){
+    response.writeHead(200,{
+      'Content-Type': 'application/json'
+    });
+    response.write('{"success":"1"}','utf-8');
+    response.end();
+  }
   switch(pname){
     case '/login':
       var msg = '查无此人';
@@ -109,21 +148,23 @@ Server.prototype.doPost = function (pname,addr,data,response){
           success: 0,
           msg : msg
         };
+        writeResponse(res);
       }
       else{
         res = {
           success: 1
         };
-        this._sessions[addr] = user;
-        console.log('user "' + data['user'] +'" logged in at ' + addr);
+        crypto.randomBytes(16, function(ex, buf) {  
+          var token = buf.toString('hex');  
+          parent._sessions[token] = user;
+          writeResponseWithCookie('SSID=' + token + ';',res);
+          console.log('user "' + data['user'] +'" logged in with SSID ' + token);
+        });
       }
-      response.write(JSON.stringify(res),'utf-8');
-      response.end();
       break;
     case '/logout':
       delete this._sessions[addr];
-      response.write('{"success":"1"}','utf-8');
-      response.end();
+      writeOkResponse();
       break;
     case '/getuser':
       var user = this._sessions[addr];
@@ -141,8 +182,7 @@ Server.prototype.doPost = function (pname,addr,data,response){
           msg : '还没登录，所以锁尔了'
         };
       }
-      response.write(JSON.stringify(res),'utf-8');
-      response.end();
+      writeResponse(res);
       break;
     case '/getallwords':
       var user = this._sessions[addr];
@@ -155,174 +195,141 @@ Server.prototype.doPost = function (pname,addr,data,response){
         res.success = 0;
         res.msg = '还没登录，所以锁尔了';
       }
-      response.write(JSON.stringify(res),'utf-8');
-      response.end();
+      writeResponse(res);
       break;
     case '/edit':
       var user = this._sessions[addr];
       if(!user){
-        response.write('{"success":"0","msg":"还没登录，统统锁尔"}','utf-8');
-        response.end();
+        writeErrResponse("还没登录，统统锁尔");
       }
       else{
         user.draft(data['type'],data['data']);
-        response.write('{"success":"1"}','utf-8');
-        response.end();
+        writeResponse({success:1});
       }
       break;
     case '/getdrafts':
       var user = this._sessions[addr];
       if(!user){
-        response.write('{"success":"0","msg":"还没登录，统统锁尔"}','utf-8');
-        response.end();
+        writeErrResponse("还没登录，统统锁尔");
       }
       else{
         var res = {};
         res.drafts = user.getAllDrafts();
         res.current_draft = user.getCurrentDraft();
         res.success = 1;
-        response.write(JSON.stringify(res),'utf-8');
-        response.end();
+        writeResponse(res);
       }
       break;
     case '/updatedraft':
       var user = this._sessions[addr];
       if(!user){
-        response.write('{"success":"0","msg":"还没登录，统统锁尔"}','utf-8');
-        response.end();
+        writeErrResponse("还没登录，统统锁尔");
       }
       else{
         var res = {};
         user.updateDraft(data['type'],data['identifier'],data['content']);
         this.DB.checkBackup(function(){
-          console.log(data['type'] + data['identifier'] + data['content']);
-          response.write('{"success":"1"}','utf-8');
-          response.end();
+          writeOkResponse();
         });
       }
       break;
     case '/closedraft':
       var user = this._sessions[addr];
       if(!user){
-        response.write('{"success":"0","msg":"还没登录，统统锁尔"}','utf-8');
-        response.end();
+        writeErrResponse("还没登录，统统锁尔");
       }
       else{
         var res = {};
         user.closeDraft(data['type'],data['identifier']);
         this.DB.checkBackup(function(){
-          response.write('{"success":"1"}','utf-8');
-          response.end();
+          writeOkResponse();
         });
       }
       break;
     case '/commitdraft':
       var user = this._sessions[addr];
       if(!user){
-        response.write('{"success":"0","msg":"还没登录，统统锁尔"}','utf-8');
-        response.end();
+        writeErrResponse("还没登录，统统锁尔");
       }
       else{
         var res = {};
         user.updateDraft(data['type'],data['identifier'],data['content']);
         user.commitDraft(data['type'],data['identifier'],data['content']);
         this.DB.checkBackup(function(){
-          response.write('{"success":"1"}','utf-8');
-          response.end();
+          writeOkResponse();
         });
       }
       break;
     case '/getallpages':
       var user = this._sessions[addr];
       if(!user){
-        response.write('{"success":"0","msg":"还没登录，统统锁尔"}','utf-8');
-        response.end();
+        writeErrResponse("还没登录，统统锁尔");
       }
       else{
         var res = {};
         res.data = user.getAllPages();
-        console.log(res.data);
         res.success = 1;
-        response.write(JSON.stringify(res),'utf-8');
-        response.end();
+        writeResponse(res);
       }
       break;
     case '/getallredir':
       var user = this._sessions[addr];
       if(!user){
-        response.write('{"success":"0","msg":"还没登录，统统锁尔"}','utf-8');
-        response.end();
+        writeErrResponse("还没登录，统统锁尔");
       }
       else{
         var res = {};
         res.data = user.getAllredir();
-        //console.log(res.data);
         res.success = 1;
-        response.write(JSON.stringify(res),'utf-8');
-        response.end();
+        writeResponse(res);
       }
       break;
     case '/updateredir':
       var user = this._sessions[addr];
       if(!user){
-        response.write('{"success":"0","msg":"还没登录，统统锁尔"}','utf-8');
-        response.end();
+        writeErrResponse("还没登录，统统锁尔");
       }
       else{
         user.updateRedir(res['index'],res['key'],res['value']);
         this.DB.checkBackup(function(){
-          response.write('{"success":"1"}','utf-8');
-          response.end();
+          writeOkResponse();
         });
       }
       break;
     case '/new':
       var user = this._sessions[addr];
-      console.log(data['data']);
       if(!user){
-        response.write('{"success":"0","msg":"还没登录，统统锁尔"}','utf-8');
-        response.end();
+        writeErrResponse("还没登录，统统锁尔");
       }
       else if(!data['type']){
-        response.write('{"success":"0","msg":"请求错误"}','utf-8');
-        response.end();
+        writeErrResponse('请求错误');
       }
       else if(data['type'] == 'word' && this.DB.wordExists(data['data'])){
-        console.log('exists');
-        response.write('{"success":"0","msg":"词条“' + data['data'] + '”已存在，请重新添加。"}','utf-8');
-        response.end();
+        writeErrResponse('词条“' + data['data'] + '”已存在，请重新添加。');
       }
       else if(data['type'] == 'page' && this.DB.pageExists(data['data'])){
-        console.log('exists');
-        response.write('{"success":"0","msg":"页面“' + data['data'] + '”已存在，请重新添加。"}','utf-8');
-        response.end();
+        writeErrResponse('页面“' + data['data'] + '”已存在，请重新添加。');
       }
       else{
-        console.log('not exists');
         user.draft(data['type'],data['data']);
         this.DB.checkBackup(function(){
-          response.write('{"success":"1"}','utf-8');
-          response.end();
+          writeOkResponse();
         });
       }
       break;
     case '/delete':
       var user = this._sessions[addr];
-      console.log(data['data']);
       if(!user){
-        response.write('{"success":"0","msg":"还没登录，统统锁尔"}','utf-8');
-        response.end();
+        writeErrResponse("还没登录，统统锁尔");
       }
       else if(!checkArg(data,['type','identifier'])){
-        response.write('{"success":"0","msg":"参数错误"}','utf-8');
-        response.end();
+        writeErrResponse('请求错误');
       }
       else {
         user.Delete(data['type'],data['identifier']);
         user.closeDraft(data['type'],data['identifier']);
         this.DB.checkBackup(function(){
-          response.write('{"success":"1"}','utf-8');
-          response.end();
+          writeOkResponse();
         });
       }
       break;

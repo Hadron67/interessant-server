@@ -50,8 +50,8 @@
 				<ul class="nav navbar-nav navbar-left">
 					<li><a href="/index.html" id='link-wiki'>wiki</a></li>
 					<li class="active"><a href="#">编辑</a></li>
-					<li><a href="#">资源文件</a></li>
-					<li><a href="#">控制</a></li>
+					<li><a href="/resources.html">资源文件</a></li>
+					<li><a href="/controls.html">控制</a></li>
 				</ul>
 				<div class="dropdown pull-right">
 					<p class="navbar-text pull-right" id="user-info">
@@ -135,7 +135,6 @@
 					});
 					$('#link-logout').click(function(){
 						$.post('/logout',{},function(result){
-							result = $.parseJSON(result);
 							if(result.success != 0){
 								window.location.href = '/login.html';
 							}
@@ -163,8 +162,7 @@
 						identifier : Wikim.drafts[index].identifier,
 						content : content
 					},function(result){
-						result = $.parseJSON(result);
-						if(result.success){
+						if(result.success != 0){
 							alert('success');
 						}
 					});
@@ -175,10 +173,12 @@
 						type : Wikim.drafts[index].type,
 						identifier : Wikim.drafts[index].identifier
 					},function(result){
-						result = $.parseJSON(result);
-						if(result.success){
+						console.log(result);
+						if(result.success != 0){
 							Wikim.getDrafts();
 						}
+					}).error(function(e){
+						alert(e.toString());
 					});
 				});
 				$('#btn-commit').click(function(){
@@ -189,8 +189,7 @@
 						identifier : Wikim.drafts[index].identifier,
 						content : content
 					},function(result){
-						result = $.parseJSON(result);
-						if(result.success){
+						if(result.success != 0){
 							alert('success');
 						}
 					});
@@ -214,7 +213,6 @@
 						type : Wikim.drafts[index].type,
 						identifier : Wikim.drafts[index].identifier,
 					},function(result){
-						result = $.parseJSON(result);
 						if(result.success != 0){
 							Wikim.getDrafts();
 						}

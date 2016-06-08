@@ -6,8 +6,7 @@ var Wikim = (function($){
 	a.drafts = undefined;
 	a.redirs = {};
 	a.getUser = function(cb){
-		return $.post('/getuser',{},function(result){
-			var response = $.parseJSON(result);
+		return $.post('/getuser',{},function(response){
 			if(response.success != 0){
 				$('#user-info').html('以<a aria-haspopup="true" aria-expanded="false" data-toggle="dropdown" id="user-name" href="#" class="user-menu navbar-link">' + response.username + '</a>的身份登录');
 				user = response.username;
@@ -25,8 +24,7 @@ var Wikim = (function($){
 	}
 	
 	a.getAllWords = function(cb){
-		return $.post('/getallwords',{},function(result){
-			var response = $.parseJSON(result);
+		return $.post('/getallwords',{},function(response){
 			if(response.success != 0){
 				var s = '';
 				a.words = response.data;
@@ -61,8 +59,7 @@ var Wikim = (function($){
 	}
 	
 	a.getAllPages = function(cb){
-		return $.post('/getallpages',{},function(result){
-			var response = $.parseJSON(result);
+		return $.post('/getallpages',{},function(response){
 			if(response.success != 0){
 				var pages = response.data;
 				var content = '';
@@ -80,8 +77,7 @@ var Wikim = (function($){
 		});
 	}
 	a.getAllredir = function(cb){
-		return $.post('/getallredir',{},function(result){
-			var response = $.parseJSON(result);
+		return $.post('/getallredir',{},function(response){
 			if(response.success != 0){
 				a.redirs = response.data;
 				var list = '<tr><th>被重定向词条</th><th>目标词条</th></tr>';
@@ -97,7 +93,6 @@ var Wikim = (function($){
 	
 	a.getDrafts = function(cb){
 		return $.post('/getdrafts',{},function(result){
-			result = $.parseJSON(result);
 			if(result.success != 0){
 				a.drafts = result.drafts;
 				var list = '';
