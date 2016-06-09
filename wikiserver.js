@@ -37,7 +37,8 @@ var Server = function(){
 	// 	root : './www',
   //   defaultFile : 'index.html'
 	// };
-  this.config = JSON.parse(fs.readFileSync('config.json','utf-8'));
+  
+  this.config = JSON.parse(fs.readFileSync('serverconfig.json','utf-8'));
   this.DB = new wmgr.WikiDB();
   this.DB.open();
   this._sessions = {};
@@ -311,6 +312,9 @@ Server.prototype.doPost = function (pname,cookies,data,response){
       else if(data['type'] == 'page' && this.DB.pageExists(data['data'])){
         writeErrResponse('页面“' + data['data'] + '”已存在，请重新添加。');
       }
+      else if(data['data'] == ''){
+        writeErrResponse('锁尔空白的词条名或页面名');
+      }
       else{
         user.draft(data['type'],data['data']);
         this.DB.checkBackup(function(){
@@ -327,11 +331,30 @@ Server.prototype.doPost = function (pname,cookies,data,response){
         writeErrResponse('请求错误');
       }
       else {
-        user.Delete(data['type'],data['identifier']);
+        user.DeleteItem(data['type'],data['identifier']);
         user.closeDraft(data['type'],data['identifier']);
         this.DB.checkBackup(function(){
           writeOkResponse();
         });
+      }
+      break;
+    case '/export':
+      var user = this._sessions[addr];
+      if(!user){
+        writeErrResponse("还没登录，统统锁尔");
+      }
+      else if(!checkArg(data,['what'])){
+        writeErrResponse('请求错误');
+      }
+      else{
+        switch(data['what']){
+          case 'maindb':
+            user.exportMainDB(function(){
+              writeOkResponse();
+            });
+            break;
+
+        }
       }
       break;
   }

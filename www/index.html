@@ -231,7 +231,10 @@
 				otext: '',
 				id: null
 			};
-			Wikim.getUser(function(){
+			Wikim.getUser(function(result){
+				if(result.success == 0){
+					//window.location.href = '/login.html';
+				}
 				Wikim.getAllWords(function(){
 					function wordslinks(){
 						$('.words-item').click(function(){

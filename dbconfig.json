@@ -1,0 +1,5 @@
+{
+    "pdb": "db/db.json",
+    "userdb": "db/user.json",
+    "maindbexport": "www/output/datas.js"
+}

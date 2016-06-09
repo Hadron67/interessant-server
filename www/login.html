@@ -54,7 +54,7 @@
 						<input type="checkbox" value="remember-me">记住我
 					</label>
 				</div>
-				<button class="btn btn-lg btn-primary btn-block" type="submit">登录</button>
+				<button id="btn-login" class="btn btn-lg btn-primary btn-block" type="submit">登录</button>
 			</form>
 			<div id="err-container"></div>
 		</div>
@@ -65,12 +65,14 @@
 			(function(){
 				'use strict';
 				$('#login-form').submit(function(e){
+					$('#btn-login').html('登录中……');
 					$.post('/login',{
 						user : $('#login-name').val(),
 						pass : $('#login-pass').val()
 					},function(response){
 						if(!response.success){
 							err(response.msg);
+							$('#btn-login').html('登录');
 						}
 						else{
 							location.href = "/";

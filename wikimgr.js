@@ -8,10 +8,11 @@ function encryptPass(pass){
 
 var WikiDB = function(){
 	this._userdb = this._pdb = undefined;
-	this.config = {
-		pdb: 'db/db.json',
-		userdb: 'db/user.json'
-	};
+	// this.config = {
+	// 	pdb: 'db/db.json',
+	// 	userdb: 'db/user.json'
+	// };
+	this.config = JSON.parse(fs.readFileSync('dbconfig.json','utf-8'));
 	this._pdblock = false;
 	this._userdblock = false;
 
@@ -22,6 +23,22 @@ var WikiDB = function(){
 WikiDB.prototype.open = function(){
 	this._pdb = JSON.parse(fs.readFileSync(this.config.pdb,'utf-8'));
 	this._userdb = JSON.parse(fs.readFileSync(this.config.userdb,'utf-8'));
+}
+WikiDB.prototype._exportMainDB = function(cb){
+	var edb = 'var pDB={ReDir:{';
+	for(var i = 0;i < this._pdb.ReDir.length;i++){
+		var item = this._pdb.ReDir[i];
+		if(i == this._pdb.ReDir.length - 1)
+			edb += '"' + item.key + '":"' + item.value + '"';
+		else
+			edb += '"' + item.key + '":"' + item.value + '",';
+	}
+	edb += '},DATAs:' + JSON.stringify(this._pdb.DATAs) + ',page:' + JSON.stringify(this._pdb.pages) + '}';
+	fs.writeFile(this.config.maindbexport,edb,function(e){
+		if(cb)
+			cb();
+	});
+
 }
 WikiDB.prototype.checkBackup = function(cb){
 	var parent = this;
@@ -232,7 +249,7 @@ WikiUser.prototype.commitDraft = function(type,identifier){
 		}
 	}
 }
-WikiUser.prototype.Delete = function(type,identifier){
+WikiUser.prototype.DeleteItem = function(type,identifier){
 	switch(type){
 		case 'page':
 			this._db.deletePage(identifier);
@@ -251,6 +268,9 @@ WikiUser.prototype.updateRedir = function(index,key,value){
 		this._db.ReDir[i].value = value;
 		this._db._pdbchanged = true;
 	}
+}
+WikiUser.prototype.exportMainDB = function(cb){
+	this._db._exportMainDB(cb);
 }
 
 exports.WikiDB = WikiDB;
