@@ -10,6 +10,16 @@ var Wikim = (function($){
 			if(response.success != 0){
 				$('#user-info').html('以<a aria-haspopup="true" aria-expanded="false" data-toggle="dropdown" id="user-name" href="#" class="user-menu navbar-link">' + response.username + '</a>的身份登录');
 				user = response.username;
+				$('#user-name').click(function(){
+					$('#user-info').dropdown('toggle');
+				});
+				$('#link-logout').click(function(){
+					$.post('/logout',{},function(result){
+						if(result.success != 0){
+							window.location.href = '/login.html';
+						}
+					});
+				});
 			}
 			else{
 				$('#user-info').html('<a href="/login.html" class="navbar-link">未登录</a>');
@@ -105,25 +115,30 @@ var Wikim = (function($){
 								+'<div>没有正在编辑的词条</div>'
 							+'</div>'
 						+'</div>');
-					return;
 				}
-				for(var i = 0;i < result.drafts.length;i++){
-					var active = '';
-					var active2 = '';
-					if(i == result.current_draft){
-						active = 'active';
-						active2 = 'in active';
+				else{
+					for(var i = 0;i < result.drafts.length;i++){
+						var active = '';
+						var active2 = '';
+						if(i == result.current_draft){
+							active = 'active';
+							active2 = 'in active';
+						}
+						list += '<li role="presentation" class="' + active + '"><a href="#file' + i + '" data-toggle="tab" data-index="' + i + '">' 
+							+ result.drafts[i].identifier + '</a></li>';
+						content += '<div class="container-fluid tab-pane fade ' + active2 + '" id="file' + i + '">'
+										+ '<div class="row" style="padding-bottom:10px;">'
+											+ '<button type="button" class="btn btn-default btn-close" data-toggle="tooltip" data-placement="top" title="关闭前注意保存">关闭</button>'
+											+ '<button type="button" class="btn btn-default btn-preview">预览</button>'
+										+ '</div>'
+										+ '<div class="row">'
+											+ '<textarea id="file-content' + i + '" rows="25" class="input-group-lg">' + result.drafts[i].content + '</textarea>'
+										+ '</div>'
+								+ '</div>';
 					}
-					list += '<li role="presentation" class="' + active + '"><a href="#file' + i + '" data-toggle="tab" data-index="' + i + '">' 
-						+ result.drafts[i].identifier + '</a></li>';
-					content += '<div class="container-fluid tab-pane fade ' + active2 + '" id="file' + i + '">'
-									+ '<div class="row">'
-										+ '<textarea id="file-content' + i + '" rows="25" class="input-group-lg">' + result.drafts[i].content + '</textarea>'
-									+ '</div>'
-							+ '</div>';
+					$('#file-list').html(list);
+					$('#file-content').html(content);
 				}
-				$('#file-list').html(list);
-				$('#file-content').html(content);
 			}
 			if(cb)
 				cb(result);

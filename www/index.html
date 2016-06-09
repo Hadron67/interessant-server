@@ -247,22 +247,13 @@
 							});
 						});
 					}
-					$('#user-name').click(function(){
-						$('#user-info').dropdown('toggle');
-					});
 					wordslinks();
 
 					$('#btn-search-words').click(function(){
 						Wikim.searchWords($('#search-word-form').val());
 						wordslinks();
 					});
-					$('#link-logout').click(function(){
-						$.post('/logout',{},function(result){
-							if(result.success != 0){
-								window.location.href = '/login.html';
-							}
-						});
-					});
+				
 					$('#search-word-form').on('input',function(){
 						Wikim.searchWords($(this).val());
 						wordslinks();
@@ -307,7 +298,7 @@
 						$.post('/new',{
 							type : 'page',
 							data : $('#newpage').val()
-						},function(result){
+						},function(res){
 							if(res.success != 0){
 								window.location.href = '/edit.html';
 							}

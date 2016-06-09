@@ -53,6 +53,7 @@ var Server = function(){
     var ext = path.extname(realpath);
     switch(request.method){
       case 'GET':
+        console.log('from ' + request.connection.remoteAddress + '---- GET:' + pathname);
         fs.exists(realpath,function(exists){
           if(!exists){
             response.writeHead(404, {
@@ -93,7 +94,7 @@ var Server = function(){
         }).addListener('end',function(pdata){
           parent.doPost(pathname,cookies,qs.parse(a),response);
         });
-        console.log('post:' + pathname);
+        console.log('from ' + request.connection.remoteAddress + '---- POST:' + pathname);
         break;
     }
   });
@@ -305,7 +306,7 @@ Server.prototype.doPost = function (pname,cookies,data,response){
         writeErrResponse('请求错误');
       }
       else if(data['type'] == 'word' && this.DB.wordExists(data['data'])){
-        writeErrResponse('词条“' + data['data'] + '”已存在，请重新添加。');
+        writeErrResponse('词条“' + data['data'] + '”已存在或被重定向，请重新添加。');
       }
       else if(data['type'] == 'page' && this.DB.pageExists(data['data'])){
         writeErrResponse('页面“' + data['data'] + '”已存在，请重新添加。');

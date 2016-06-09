@@ -92,11 +92,11 @@
 						</div>
 					</div>
 					<div class="panel-footer">
-						<button type="button" class="btn btn-default">预览</button>
-						<button type="button" class="btn btn-default" id="btn-close">关闭</button>
-						<button type="button" class="btn btn-primary" id="btn-save">保存</button>
-						<button type="button" class="btn btn-primary" id="btn-commit">提交</button>
-						<button type="button" class="btn btn-danger pull-right" id="btn-delete">删除</button>
+						<!--<button type="button" class="btn btn-default">预览</button>
+						<button type="button" class="btn btn-default" id="btn-close">关闭</button>-->
+						<button type="button" class="btn btn-primary btn-draftoptr" id="btn-save">保存</button>
+						<button type="button" class="btn btn-primary btn-draftoptr" id="btn-commit">提交</button>
+						<button type="button" class="btn btn-danger pull-right btn-draftoptr" id="btn-delete">删除</button>
 					</div>
 				</div>
 			</div>
@@ -130,29 +130,30 @@
 	<script>
 		Wikim.getUser(function(result){
 				if(result.success != 0){
-					$('#user-name').click(function(){
-						$('#user-info').dropdown('toggle');
-					});
-					$('#link-logout').click(function(){
-						$.post('/logout',{},function(result){
-							if(result.success != 0){
-								window.location.href = '/login.html';
-							}
-						});
-					});
-					Wikim.getDrafts(function(result){
-						if(result.success != 0){
-							initEvent();
-						}
-						else
-							$('.err-msg-container').html(result.msg);
-					});
+					refresh();
 				}
 				else{
 					$('.err-msg-container').html(result.msg);
+					$('.btn-draftoptr').attr('disabled','disabled');
 				}
 			});
 			
+			function refresh(){
+				Wikim.getDrafts(function(result){
+					$('.btn-draftoptr').attr('disabled','disabled');
+					if(result.success != 0){
+						if(Wikim.drafts.length > 0){
+							$('.btn-draftoptr').removeAttr('disabled');
+							initEvent();
+						}
+					}
+					else{
+						$('.btn-draftoptr').attr('disabled','true');
+						$('.err-msg-container').html(result.msg);
+					}
+				});
+			}
+
 			function initEvent(){
 				$('#btn-save').click(function(){
 					var index = $('#file-list .active a').attr('data-index');
@@ -167,7 +168,8 @@
 						}
 					});
 				});
-				$('#btn-close').click(function(){
+				$('.btn-close').tooltip();
+				$('.btn-close').click(function(){
 					var index = $('#file-list .active a').attr('data-index');
 					$.post('/closedraft',{
 						type : Wikim.drafts[index].type,
@@ -175,7 +177,7 @@
 					},function(result){
 						console.log(result);
 						if(result.success != 0){
-							Wikim.getDrafts();
+							refresh();
 						}
 					}).error(function(e){
 						alert(e.toString());
@@ -215,6 +217,7 @@
 					},function(result){
 						if(result.success != 0){
 							Wikim.getDrafts();
+							initEvent();
 						}
 					});
 				});

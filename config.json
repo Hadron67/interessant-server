@@ -1,5 +1,6 @@
 {
-    "port" : "8787",
+    "port" : "8000",
 	"root" : "./www",
-    "defaultFile" : "index.html"
+    "defaultFile" : "index.html",
+    "login-timeout" : "600"
 }

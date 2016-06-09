@@ -9,7 +9,7 @@ function encryptPass(pass){
 var WikiDB = function(){
 	this._userdb = this._pdb = undefined;
 	this.config = {
-		pdb: 'db/db2.json',
+		pdb: 'db/db.json',
 		userdb: 'db/user.json'
 	};
 	this._pdblock = false;
