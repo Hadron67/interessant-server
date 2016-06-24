@@ -137,6 +137,7 @@ Server.prototype.doPost = function (pname,cookies,data,response){
     response.write('{"success":"1"}','utf-8');
     response.end();
   }
+  
   switch(pname){
     case '/login':
       var msg = '查无此人';
@@ -274,18 +275,10 @@ Server.prototype.doPost = function (pname,cookies,data,response){
         writeResponse(res);
       }
       break;
-    case '/getallredir':
-      var user = this._sessions[addr];
-      if(!user){
-        writeErrResponse("还没登录，统统锁尔");
-      }
-      else{
-        var res = {};
-        res.data = user.getAllredir();
-        res.success = 1;
-        writeResponse(res);
-      }
-      break;
+    case '/getredir':
+      
+
+
     case '/updateredir':
       var user = this._sessions[addr];
       if(!user){

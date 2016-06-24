@@ -235,8 +235,9 @@
 						identifier : Wikim.drafts[index].identifier,
 					},function(result){
 						if(result.success != 0){
-							Wikim.getDrafts();
-							initEvent();
+							Wikim.getDrafts(function(result){
+								initEvent();
+							});
 						}
 					});
 				});

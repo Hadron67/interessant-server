@@ -86,20 +86,20 @@ var Wikim = (function($){
 			}
 		});
 	}
-	a.getAllredir = function(cb){
-		return $.post('/getallredir',{},function(response){
-			if(response.success != 0){
-				a.redirs = response.data;
-				var list = '<tr><th>被重定向词条</th><th>目标词条</th></tr>';
-				for(var i = 0;i < a.redirs.length;i++){
-					list += '<tr><td><div id="redirkey' + i + '" class="redir-key container-fluid" data-index="' + i + '">' + a.redirs[i].key + '</div></td><td><div id="redirvalue' + i + '" class="redir-value container-fluid" data-index="' + i + '">' + a.redirs[i].value + '</div></td></tr>';
-				}
-				$('#table-redir-list').html(list);
-			}
-			if(cb)
-				cb(response);
-		});
-	}
+	// a.getAllredir = function(cb){
+	// 	return $.post('/getallredir',{},function(response){
+	// 		if(response.success != 0){
+	// 			a.redirs = response.data;
+	// 			var list = '<tr><th>被重定向词条</th><th>目标词条</th></tr>';
+	// 			for(var i = 0;i < a.redirs.length;i++){
+	// 				list += '<tr><td><div id="redirkey' + i + '" class="redir-key container-fluid" data-index="' + i + '">' + a.redirs[i].key + '</div></td><td><div id="redirvalue' + i + '" class="redir-value container-fluid" data-index="' + i + '">' + a.redirs[i].value + '</div></td></tr>';
+	// 			}
+	// 			$('#table-redir-list').html(list);
+	// 		}
+	// 		if(cb)
+	// 			cb(response);
+	// 	});
+	// }
 	
 	a.getDrafts = function(cb){
 		return $.post('/getdrafts',{},function(result){

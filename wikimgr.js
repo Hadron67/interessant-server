@@ -26,12 +26,11 @@ WikiDB.prototype.open = function(){
 }
 WikiDB.prototype._exportMainDB = function(cb){
 	var edb = 'var pDB={ReDir:{';
-	for(var i = 0;i < this._pdb.ReDir.length;i++){
-		var item = this._pdb.ReDir[i];
-		if(i == this._pdb.ReDir.length - 1)
-			edb += '"' + item.key + '":"' + item.value + '"';
-		else
-			edb += '"' + item.key + '":"' + item.value + '",';
+	for(var cle in this._pdb.ReDir){
+		var aaa = this._pdb.ReDir[cle];
+		for(var i in aaa){
+			edb += '"' + aaa[i] + '":"' + cle + '",';
+		}
 	}
 	edb += '},DATAs:' + JSON.stringify(this._pdb.DATAs) + ',page:' + JSON.stringify(this._pdb.pages) + '}';
 	fs.writeFile(this.config.maindbexport,edb,function(e){
@@ -71,19 +70,17 @@ WikiDB.prototype.checkBackup = function(cb){
 	
 }
 WikiDB.prototype.wordExists = function(word){
-	for(var i = 0;i < this._pdb.ReDir.length;i++){
-		if(this._pdb.ReDir[i].key == word)
-			return true;
-	}
-	return this._pdb.DATAs[word] != undefined;
+	return this.redirExists(word) || this._pdb.DATAs[word] != undefined;
 }
 WikiDB.prototype.pageExists = function(page){
 	return this._pdb.pages[page] != undefined;
 }
 WikiDB.prototype.redirExists = function(word){
-	for(var i = 0;i < this._pdb.ReDir.length;i++){
-		if(this._pdb.ReDir[i].key == word)
-			return true;
+	for(var cle in this._pdb.ReDir){
+		for(var j in this._pdb.ReDir[cle]){
+			if(this._pdb.ReDir[cle][j] == word)
+				return true;
+		}
 	}
 	return false;
 }
@@ -259,14 +256,23 @@ WikiUser.prototype.DeleteItem = function(type,identifier){
 			break;
 	}
 }
-WikiUser.prototype.getAllredir = function(){
-	return this._db._pdb.ReDir;
+WikiUser.prototype.getRedir = function(cle){
+	return this._db.ReDir[cle] || [];
 }
-WikiUser.prototype.updateRedir = function(index,key,value){
-	if(index < this._db.ReDir.length){
-		this._db.ReDir[i].key = key;
-		this._db.ReDir[i].value = value;
-		this._db._pdbchanged = true;
+WikiUser.prototype.newRedirItem = function(key,target){
+	function hasTarget(a,t){
+		for(var i in a){
+			if(a[i] == t)
+				return true;
+		}
+		return false;
+	}
+
+	if(this._db.ReDir[key]){
+		if(!hasTarget(this._db.ReDir[key],target)){
+			this._db.ReDir[key].push(target);
+			this._db._pdbchanged = true;
+		}
 	}
 }
 WikiUser.prototype.exportMainDB = function(cb){

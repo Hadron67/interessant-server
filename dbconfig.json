@@ -1,5 +1,5 @@
 {
-    "pdb": "db/db.json",
+    "pdb": "db/db2.json",
     "userdb": "db/user.json",
     "maindbexport": "www/output/datas.js"
 }
