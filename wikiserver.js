@@ -8,6 +8,7 @@ var qs = require('querystring');
 var crypto = require('crypto');
 
 var wmgr = require('./wikimgr.js');
+var routeur = require('./routeur.js');
 
 var contentTypes = {
   ".css": "text/css",
@@ -30,76 +31,228 @@ var contentTypes = {
   ".xml": "text/xml",
   '.cdf': 'application/vnd.wolfram.cdf.text'
 };
+function Request(r){
+  var cookies = {};
+  r.headers.cookie && r.headers.cookie.split(';').forEach(function (Cookie) {
+    var parts = Cookie.split('=');
+    cookies[parts[0].trim()] = (parts[1] || '').trim();
+  });
+  this.cookies = cookies;
+  this.method = r.method;
+  this._r = r;
+  this.params = {};
+  this.session = {};
+}
+Request.prototype.listen = function(cb){
+  var a = '';
+  var parent = this;
+  this._r.addListener('data', function (pdata) {
+    a += pdata;
+  }).addListener('end', function (pdata) {
+    parent.params = qs.parse(a);
+    if(cb)
+      cb.call(parent);
+  });
+}
 
-var Server = function(){
-	// this.config = {
-	// 	port : 8080,
-	// 	root : './www',
-  //   defaultFile : 'index.html'
-	// };
-  
+function Response(re){
+  this._re = re;
+  this.content_type = 'text/html';
+  this.statuscode = 200;
+  this.cookies = undefined;
+  this.content = '';
+  this.encoding = 'utf8';
+}
+Response.prototype.end = function(){
+  var head = {
+    'Content-Type' : this.content_type
+  };
+  if(this.cookies){
+    var s = '';
+    for(key in this.cookies){
+      s += key + '=' + this.cookies[key] + ';';
+    }
+    s += 'HttpOnly';
+    head['Set-Cookie'] = s;
+  }
+  this._re.writeHead(this.statuscode,head);
+  this._re.write(this.content,this.encoding);
+  this._re.end();
+  return this;
+}
+Response.prototype.string = function(s){
+  this.content += s;
+  return this;
+}
+Response.prototype.file = function(s){
+  this.content = s;
+  this.encoding = 'binary';
+  return this;
+}
+Response.prototype.status = function(s){
+  this.statuscode = s;
+  return this;
+}
+Response.prototype.contenttype = function(t){
+  this.content_type = t;
+  return this;
+}
+Response.prototype.cookie = function(key,value){
+  this.cookies = this.cookies || {};
+  this.cookie[key] = value;
+}
+Response.prototype.json = function(obj){
+  this.content = JSON.stringify(obj);
+  this.content_type = 'application/json';
+  this.encoding = 'utf8';
+  return this;
+}
+
+
+function Sessionmgr(){
+  this.sessions = {};
+  this.timers = {};
+}
+Sessionmgr.prototype.generateSession = function(timeout,cb){
+  crypto.randomBytes(16, function (ex, buf) {
+    var ssid = buf.toString('hex');
+    var ret = this.sessions[ssid] = {};
+    var parent = this;
+
+    if(timeout) this.timers[ssid] = setTimeout(function(){
+      delete parent.sessions[ssid];
+      delete parent.timers[ssid];
+    },timeout);
+    if(cb)
+      cb(ssid,ret);
+  });
+}
+Sessionmgr.prototype.getSession = function(ssid,timeout){
+  var ret;
+  var parent = this;
+  if(ret = this.sessions[ssid]){
+    clearTimeout(this.timers[ssid]);
+    this.timers[ssid] = setTimeout(function () {
+      delete parent.sessions[ssid];
+      delete parent.timers[ssid];
+    }, timeout);
+  }
+  else {
+    ret = this.sessions[ssid] = {};
+    var parent = this;
+
+    if (timeout) this.timers[ssid] = setTimeout(function () {
+      delete parent.sessions[ssid];
+      delete parent.timers[ssid];
+    }, timeout);
+  }
+  return ret;
+}
+Sessionmgr.prototype.refreshSessioiin = function(ssid){
+  clearTimeout(this.timers[ssid]);
+  this.timers[ssid] = setTimeout(function(){
+    delete parent.sessions[ssid];
+    delete parent.timers[ssid];
+  },timeout);
+}
+
+function Server(){
   this.config = JSON.parse(fs.readFileSync('serverconfig.json','utf-8'));
   this.DB = new wmgr.WikiDB();
   this.DB.open();
   this._sessions = {};
+  this.session = {};
+  this.sessionmgr = new Sessionmgr();
+  this._route = {};
+  routeur.initRoutes(this);
   var parent = this;
 	this.server = http.createServer(function servercb(request,response){
     var pathname = url.parse(request.url).pathname;
     if (pathname.charAt(pathname.length - 1) == "/") {
       pathname += parent.config.defaultFile;
     }
-    //console.log(request.connection.remoteAddress);
-    var realpath = path.join(parent.config.root,pathname);
-    //console.log(realpath);
-    var ext = path.extname(realpath);
-    switch(request.method){
-      case 'GET':
-        console.log('from ' + request.connection.remoteAddress + '---- GET:' + pathname);
-        fs.exists(realpath,function(exists){
-          if(!exists){
-            response.writeHead(404, {
-              'Content-Type': 'text/plain'
-            });
-            response.write("This request URL " + pathname + " was not found on this server.");
-            response.end();
-          }
-          else{
-            fs.readFile(realpath,'binary',function(err,file){
-              if(err){
-                response.writeHead(500, {
-                  'Content-Type': 'text/plain',
-                });
-                response.write('internal erreur:\n' + err);
-                response.end();
-              }
-              else{
-                response.writeHead(200,{
-                  'Content-Type' : contentTypes[ext] || 'text/plain'
-                });
-                response.write(file,'binary');
-                response.end();
-              }
-            });
-          }
+    var req = new Request(request);
+    req.listen(function(){
+      var ssid,session;
+      if(!(ssid = this.cookies['SSID']))
+        parent.sessionmgr.generateSession(parent.config['session-timeout'], function (ssid,session) {
+          
+          req.session = session;
+          var res = new Response(response);
+          res.cookie('SSID',ssid);
+          parent._doRoute(pathname,req,res);
         });
-        break;
-      case 'POST':
-        var a = '';
-        var cookies = {};
-        request.headers.cookie && request.headers.cookie.split(';').forEach(function( Cookie ) {
-            var parts = Cookie.split('=');
-            cookies[ parts[ 0 ].trim() ] = ( parts[ 1 ] || '' ).trim();
-        });
-        request.addListener('data',function(pdata){
-          a += pdata;
-        }).addListener('end',function(pdata){
-          parent.doPost(pathname,cookies,qs.parse(a),response);
-        });
-        console.log('from ' + request.connection.remoteAddress + '---- POST:' + pathname);
-        break;
+      else{
+
+        req.session = parent.sessionmgr.getSession(ssid,parent.config['session-timeout']);
+        parent._doRoute(pathname,req, new Response(response));
+      }
+    });
+  });
+}
+
+Server.prototype.addRoute = function(path,func){
+  var r = this._route;
+  var p = path.split('/');
+  var i;
+  for(i = 1;i < p.length - 1;i++){
+    if(r[p[i]]){
+      r = r[p[i]];
+    }
+    else{
+      r = r[p[i]] = {};
+    }
+  }
+  r[p[i]] = func;
+}
+Server.prototype._doRoute = function(path,request,response){
+  var p = path.split('/');
+  var r = this._route;
+  out:
+  for(var i = 1;i < p.length;i++){
+    r = r[p[i]];
+    switch(typeof r){
+      case 'undefined':
+        
+        this.sendFile(path,response);
+        break out;
+      case 'function':
+        r.call(this,request,response);
+        break out;
+    }
+  }
+}
+
+Server.prototype.sendFile = function (pathname, response) {
+  var realpath = path.join(this.config.root,pathname);
+  var ext = path.extname(realpath);
+  fs.exists(realpath, function (exists) {
+    if (!exists) {
+      response.status(404)
+      .contenttype('text/plain')
+      .string("This request URL " + pathname + " was not found on this server.")
+      .end();
+    }
+    else {
+      fs.readFile(realpath, 'binary', function (err, file) {
+        if (err) {
+          response.status(500)
+          .contenttype('text/plain')
+          .string('internal erreur:\n' + err)
+          .end();
+        }
+        else {
+          response.status(200)
+          .contenttype(contentTypes[ext] || 'text/plain')
+          .file(file)
+          .end();
+        }
+      });
     }
   });
 }
+
+
 Server.prototype.start = function(){
 	this.server.listen(this.config.port);
 	console.log('start listening at port ' + this.config.port);
@@ -207,7 +360,9 @@ Server.prototype.doPost = function (pname,cookies,data,response){
       }
       else{
         user.draft(data['type'],data['data']);
-        writeResponse({success:1});
+        this.DB.checkBackup(function () {
+          writeOkResponse();
+        });
       }
       break;
     case '/getdrafts':
@@ -276,7 +431,13 @@ Server.prototype.doPost = function (pname,cookies,data,response){
       }
       break;
     case '/getredir':
-      
+      var user = this._sessions[addr];
+      if(!user){
+        writeErrResponse("还没登录，统统锁尔");
+      }
+      else{
+        
+      }
 
 
     case '/updateredir':
@@ -354,7 +515,7 @@ Server.prototype.doPost = function (pname,cookies,data,response){
 }
 
 function checkArg(data,array){
-  for(var i = 0;i < array.length;i++){
+  for(var i in array){
     if(data[array[i]] == undefined)
       return false;
   }

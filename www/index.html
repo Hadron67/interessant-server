@@ -230,83 +230,48 @@
 				if(result.success == 0){
 					//window.location.href = '/login.html';
 				}
-				Wikim.getAllWords(function(){
-					function wordslinks(){
-						$('.words-item').click(function(){
-							var a = $(this);
-							$.post('/edit',{
-								type : 'word',
-								data : a.html()
-							},function(res){
-								if(res.success != 0){
-									window.location.href = '/edit.html';
-								}
-								
-							});
-						});
-					}
-					wordslinks();
+				var WordList = Wikim.getWordList();
+				WordList.request(function(){
+					WordList.render();
+					WordList.validateEvents();
+				});
 
-					$('#btn-search-words').click(function(){
-						Wikim.searchWords($('#search-word-form').val());
-						wordslinks();
-					});
-				
-					$('#search-word-form').on('input',function(){
-						Wikim.searchWords($(this).val());
-						wordslinks();
-					});
-					$('#btn-newword').click(function(){
-						$('#diag-newword').modal('show');
-					});
-					$('#btn-newword-confirm').click(function(){
-						//alert(6456);
-						$('#diag-newword').modal('hide');
-						$.post('/new',{
-							type: 'word',
-							data: $('#newword').val()
-						},function(result){
-							if(result.success != 0){
-								window.location.href = '/edit.html';
-							}
-							else{
-								$('.err-container').html(result.msg);
-								$('#diag-err').modal('show');
-							}
-						});
-					});
+				var PageList = Wikim.getPageList();
+				PageList.request(function(){
+					PageList.render();
+					PageList.validateEvents();
 				});
-				Wikim.getAllPages(function(){
-					$('.pages-button').click(function(e){
-						var a = $(this);
-						$.post('/edit',{
-							type : 'page',
-							data : a.html()
-						},function(res){
-							if(res.success){
-								window.location.href = '/edit.html';
-							}
-						});
-					});
-					$('#btn-newpage').click(function(){
-						$('#diag-newpage').modal('show');
-					});
-					$('#btn-newpage-confirm').click(function(){
-						$('#diag-newpage').modal('hide');
-						$.post('/new',{
-							type : 'page',
-							data : $('#newpage').val()
-						},function(res){
-							if(res.success != 0){
-								window.location.href = '/edit.html';
-							}
-							else{
-								$('.err-container').html(res.msg);
-								$('#diag-err').modal('show');
-							}
-						});
-					});
-				});
+				// Wikim.getAllPages(function(){
+				// 	$('.pages-button').click(function(e){
+				// 		var a = $(this);
+				// 		$.post('/edit',{
+				// 			type : 'page',
+				// 			data : a.html()
+				// 		},function(res){
+				// 			if(res.success){
+				// 				window.location.href = '/edit.html';
+				// 			}
+				// 		});
+				// 	});
+				// 	$('#btn-newpage').click(function(){
+				// 		$('#diag-newpage').modal('show');
+				// 	});
+				// 	$('#btn-newpage-confirm').click(function(){
+				// 		$('#diag-newpage').modal('hide');
+				// 		$.post('/new',{
+				// 			type : 'page',
+				// 			data : $('#newpage').val()
+				// 		},function(res){
+				// 			if(res.success != 0){
+				// 				window.location.href = '/edit.html';
+				// 			}
+				// 			else{
+				// 				$('.err-container').html(res.msg);
+				// 				$('#diag-err').modal('show');
+				// 			}
+				// 		});
+				// 	});
+				// });
 				// Wikim.getAllredir(function(){
 				// 	$('.redir-key').click(function(){
 				// 		if($(this).attr('id') !== editing.id){

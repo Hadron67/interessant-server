@@ -60,16 +60,14 @@
 		</div>
 		<script src="js/jquery.min.js"></script>
 		<script src="js/bootstrap.min.js"></script>
+		<script src="js/mgr.js"></script>
 
 		<script>
 			(function(){
 				'use strict';
 				$('#login-form').submit(function(e){
 					$('#btn-login').html('登录中……');
-					$.post('/login',{
-						user : $('#login-name').val(),
-						pass : $('#login-pass').val()
-					},function(response){
+					Wikim.login($('#login-name').val(),$('#login-pass').val(),function(response){
 						if(!response.success){
 							err(response.msg);
 							$('#btn-login').html('登录');

@@ -166,7 +166,7 @@ WikiUser.prototype.draft = function(type,data){
 	for(var i = 0;i < this._dbitem.drafts.length;i++){
 		if(this._dbitem.drafts[i].type == type && this._dbitem.drafts[i].identifier == data){
 			this._dbitem.current_draft = i;
-			
+			this._db._userdbchanged = true;
 			return;
 		}
 	}
@@ -180,7 +180,8 @@ WikiUser.prototype.draft = function(type,data){
 				content : s
 			});
 			this._dbitem.current_draft = this._dbitem.drafts.length - 1;
-			
+			this._db._userdbchanged = true;
+
 			break;
 		case 'page':
 			var content = this._db.getPageContentByName(data);
@@ -191,6 +192,7 @@ WikiUser.prototype.draft = function(type,data){
 				content : s
 			});
 			this._dbitem.current_draft = this._dbitem.drafts.length - 1;
+			this._db._userdbchanged = true;
 			
 			break;
 	}
