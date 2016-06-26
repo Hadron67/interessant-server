@@ -40,7 +40,7 @@ function Request(r){
   this.cookies = cookies;
   this.method = r.method;
   this._r = r;
-  this.params = {};
+  this.POST = {};
   this.session = {};
 }
 Request.prototype.listen = function(cb){
@@ -49,7 +49,7 @@ Request.prototype.listen = function(cb){
   this._r.addListener('data', function (pdata) {
     a += pdata;
   }).addListener('end', function (pdata) {
-    parent.params = qs.parse(a);
+    parent.POST = qs.parse(a);
     if(cb)
       cb.call(parent);
   });
@@ -62,6 +62,7 @@ function Response(re){
   this.cookies = undefined;
   this.content = '';
   this.encoding = 'utf8';
+  this.jsonobj = {};
 }
 Response.prototype.end = function(){
   var head = {
@@ -76,6 +77,11 @@ Response.prototype.end = function(){
     head['Set-Cookie'] = s;
   }
   this._re.writeHead(this.statuscode,head);
+  switch(this.content_type){
+    case 'application/json':
+      this.content = JSON.stringify(this.jsonobj);
+  }
+
   this._re.write(this.content,this.encoding);
   this._re.end();
   return this;
@@ -101,8 +107,27 @@ Response.prototype.cookie = function(key,value){
   this.cookies = this.cookies || {};
   this.cookie[key] = value;
 }
+Response.prototype.addjson = function(key,value){
+  this.jsonobj[key] = value;
+  this.content_type = 'application/json';
+  this.encoding = 'utf8';
+  return this;
+}
 Response.prototype.json = function(obj){
-  this.content = JSON.stringify(obj);
+  this.jsonobj = obj;
+  this.content_type = 'application/json';
+  this.encoding = 'utf8';
+  return this;
+}
+Response.prototype.err = function(msg){
+  this.jsonobj.success = 0;
+  this.jsonobj.msg = msg;
+  this.content_type = 'application/json';
+  this.encoding = 'utf8';
+  return this;
+}
+Response.prototype.ok = function(){
+  this.jsonobj.success = 1;
   this.content_type = 'application/json';
   this.encoding = 'utf8';
   return this;
@@ -147,13 +172,6 @@ Sessionmgr.prototype.getSession = function(ssid,timeout){
     }, timeout);
   }
   return ret;
-}
-Sessionmgr.prototype.refreshSessioiin = function(ssid){
-  clearTimeout(this.timers[ssid]);
-  this.timers[ssid] = setTimeout(function(){
-    delete parent.sessions[ssid];
-    delete parent.timers[ssid];
-  },timeout);
 }
 
 function Server(){
@@ -208,18 +226,26 @@ Server.prototype.addRoute = function(path,func){
 Server.prototype._doRoute = function(path,request,response){
   var p = path.split('/');
   var r = this._route;
+  var found = false;
   out:
   for(var i = 1;i < p.length;i++){
     r = r[p[i]];
     switch(typeof r){
       case 'undefined':
-        
         this.sendFile(path,response);
+        found = true;
         break out;
       case 'function':
         r.call(this,request,response);
+        found = true;
         break out;
     }
+  }
+  if(!found){
+    response.status(404)
+      .contenttype('text/plain')
+      .string("This request URL " + path + " was not found on this server.")
+      .end();
   }
 }
 
@@ -512,14 +538,6 @@ Server.prototype.doPost = function (pname,cookies,data,response){
       }
       break;
   }
-}
-
-function checkArg(data,array){
-  for(var i in array){
-    if(data[array[i]] == undefined)
-      return false;
-  }
-  return true;
 }
 
 exports.WikiServer = Server;

@@ -71,7 +71,7 @@ var Wikim = (function($){
 	}
 	WordList.prototype.request = function(cb){
 		var parent = this;
-		return $.post('/getallwords',{},function(response){
+		return $.post('/api/getallwords',{},function(response){
 			if(response.success != 0){
 				var s = '';
 				parent.words = response.data;
@@ -114,7 +114,7 @@ var Wikim = (function($){
 		function wordslinks(){
 			$('.words-item').click(function () {
 				var a = $(this);
-				$.post('/edit', {
+				$.post('/api/edit', {
 					type: 'word',
 					data: a.html()
 				}, function (res) {
@@ -163,7 +163,7 @@ var Wikim = (function($){
 	}
 	PageList.prototype.request = function (cb) {
 		var parent = this;
-		return $.post('/getallpages', {}, function (response) {
+		return $.post('/api/getallpages', {}, function (response) {
 			if (response.success != 0) {
 				parent._pages = response.data;
 				this._status = 0;
@@ -236,7 +236,7 @@ var Wikim = (function($){
 	}
 	DraftList.prototype.request = function(cb){
 		var parent = this;
-		return $.post('/getdrafts',{},function(result){
+		return $.post('/api/getdrafts',{},function(result){
 			if(result.success != 0){
 				parent._drafts = result.drafts;
 				parent._currentdraft = result.current_draft;
@@ -306,7 +306,7 @@ var Wikim = (function($){
 	}
 	DraftList.prototype.saveDraft = function(index,cb){
 		var parent = this;
-		$.post('/updatedraft', {
+		$.post('/api/updatedraft', {
 			type: parent._drafts[index].type,
 			identifier: parent._drafts[index].identifier,
 			content: parent._drafts[index].content
@@ -317,7 +317,7 @@ var Wikim = (function($){
 	}
 	DraftList.prototype.commitDraft = function(index,cb){
 		var parent = this;
-		$.post('/commitdraft', {
+		$.post('/api/commitdraft', {
 			type: parent._drafts[index].type,
 			identifier: parent._drafts[index].identifier,
 			content: parent._drafts[index].content
@@ -328,7 +328,7 @@ var Wikim = (function($){
 	}
 	DraftList.prototype.closeDraft = function(index,cb){
 		var parent = this;
-		$.post('/closedraft', {
+		$.post('/api/closedraft', {
 			type: parent._drafts[index].type,
 			identifier: parent._drafts[index].identifier
 		}, function (result) {
@@ -346,7 +346,7 @@ var Wikim = (function($){
 	}
 	DraftList.prototype.deleteDraft = function(index,cb){
 		var parent = this;
-		$.post('/delete', {
+		$.post('/api/delete', {
 			type: parent._drafts[index].type,
 			identifier: parent._drafts[index].identifier,
 		}, function (result) {
@@ -434,7 +434,7 @@ var Wikim = (function($){
 		$('#btn-delete-confirm').click(function () {
 			$('#diag-delete-confirm').modal('hide');
 			var index = $('#file-list .active a').attr('data-index');
-			$.post('/delete', {
+			$.post('/api/delete', {
 				type: Wikim.drafts[index].type,
 				identifier: Wikim.drafts[index].identifier,
 			}, function (result) {
@@ -448,7 +448,7 @@ var Wikim = (function($){
 	}
 	
 	a.getDrafts = function(cb){
-		return $.post('/getdrafts',{},function(result){
+		return $.post('/api/getdrafts',{},function(result){
 			if(result.success != 0){
 				a.drafts = result.drafts;
 				var list = '';

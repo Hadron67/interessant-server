@@ -124,7 +124,7 @@
 				var $btn = $(this);
 				$btn.popover('show');
 				$btn.attr('data-content','正在导出……');
-				$.post('/export',{
+				$.post('/api/export',{
 					what: 'maindb'
 				},function(result){
 					if(result.success != 0){
