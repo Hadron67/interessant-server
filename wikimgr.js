@@ -70,6 +70,9 @@ WikiDB.prototype.checkBackup = function(cb){
 	
 }
 WikiDB.prototype.wordExists = function(word){
+	return this._pdb.DATAs[word] != undefined;
+}
+WikiDB.prototype.wordOrRedirExists = function(word){
 	return this.redirExists(word) || this._pdb.DATAs[word] != undefined;
 }
 WikiDB.prototype.pageExists = function(page){
@@ -150,6 +153,36 @@ WikiDB.prototype.getPageContentByName = function(name){
 }
 WikiDB.prototype.getRedir = function(cle){
 	return this._pdb.ReDir[cle] || [];
+}
+WikiDB.prototype.addRedir = function(key,target){
+	function hasTarget(a,t){
+		for(var i in a){
+			if(a[i] == t)
+				return true;
+		}
+		return false;
+	}
+
+	if(!this._pdb.ReDir[key]){
+		this._pdb.ReDir[key] = [];
+		this._pdbchanged = true;
+	}
+	if (!hasTarget(this._pdb.ReDir[target], key)) {
+		this._pdb.ReDir[target].push(key);
+		this._pdbchanged = true;
+	}
+}
+WikiDB.prototype.deleteRedir = function(key,target){
+	var item = this._pdb.ReDir[target];
+	if(item){
+		for(var i = 0;i < item.length;i++){
+			if(item[i] == key){
+				item.splice(index,1);
+				this._pdbchanged = true;
+				return;
+			}
+		}
+	}
 }
 
 var WikiUser = function(name,item){
@@ -265,20 +298,10 @@ WikiUser.prototype.getRedir = function(cle){
 	return this._db.getRedir(cle);
 }
 WikiUser.prototype.newRedirItem = function(key,target){
-	function hasTarget(a,t){
-		for(var i in a){
-			if(a[i] == t)
-				return true;
-		}
-		return false;
-	}
-
-	if(this._db.ReDir[key]){
-		if(!hasTarget(this._db.ReDir[key],target)){
-			this._db.ReDir[key].push(target);
-			this._db._pdbchanged = true;
-		}
-	}
+	this._db.addRedir(key,target);
+}
+WikiUser.prototype.deleteRedirItem = function(key,target){
+	this._db.deleteRedir(key,target);
 }
 WikiUser.prototype.exportMainDB = function(cb){
 	this._db._exportMainDB(cb);

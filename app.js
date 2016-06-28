@@ -177,7 +177,7 @@ exports.doNew = function(request,response){
     else if (!checkArg(request.POST,['type','data'])) {
         response.err('请求错误').end();
     }
-    else if (request.POST['type'] == 'word' && this.DB.wordExists(request.POST['data'])) {
+    else if (request.POST['type'] == 'word' && this.DB.wordOrRedirExists(request.POST['data'])) {
         response.err('词条“' + request.POST['data'] + '”已存在或被重定向，请重新添加。').end();
     }
     else if (request.POST['type'] == 'page' && this.DB.pageExists(request.POST['data'])) {
@@ -237,5 +237,47 @@ exports.getRedir = function(request,response){
     else{
         var redir = this.DB.getRedir(request.POST['word']);
         response.addjson('result',redir).ok().end();
+    }
+}
+
+exports.newRedir = function(request,response){
+    var user = request.session['user'];
+    if (!user) {
+        response.err("还没登录，统统锁尔").end();
+    }
+    else if(!checkArg(request.POST,['key','target'])){
+        response.err('invalid arguments').end();
+    }
+    else{
+        if(request.POST['key'] == ''){
+            response.err('锁尔空白的重定向词条名').end();
+        }
+        else if(this.DB.wordOrRedirExists(request.POST['key'])){
+            response.err('词条“' + request.POST['key'] + '”已存在或已被重定向，请重新输入').end();
+        }
+        else if(this.DB.redirExists(request.POST['target'])){
+            response.err('目标词条“' + request.POST['key'] + '”不存在，请重新输入').end();
+        }
+        else{
+            user.newRedirItem(request.POST['key'],request.POST['target']);
+            this.DB.checkBackup(function(){
+                response.ok().end();
+            });
+        }
+    }
+}
+exports.deleteRedir = function(request,response){
+    var user = request.session['user'];
+    if (!user) {
+        response.err("还没登录，统统锁尔").end();
+    }
+    else if(!checkArg(request.POST,['key','target'])){
+        response.err('invalid arguments').end();
+    }
+    else{
+        user.deleteRedirItem(request.POST['key'],request.POST['target']);
+        this.DB.checkBackup(function(){
+            response.ok().end();
+        });
     }
 }

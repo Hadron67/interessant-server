@@ -125,15 +125,21 @@ var Wikim = (function($){
 				cb(result);
 		});
 	}
+	WordList.prototype.editWord = function(word,cb){
+		return $.post('/api/edit', {
+			type: 'word',
+			data: word
+		}, function (res) {
+			if(cb)
+				cb(res);
+		});
+	}
 	WordList.prototype.validateEvents = function(){
 		var parent = this;
 		function wordslinks(){
 			$('.words-item').click(function () {
 				var a = $(this);
-				$.post('/api/edit', {
-					type: 'word',
-					data: a.html()
-				}, function (res) {
+				parent.editWord(a.html(),function(res){
 					if (res.success != 0) {
 						window.location.href = '/edit.html';
 					}
@@ -152,21 +158,19 @@ var Wikim = (function($){
 			wordslinks();
 		});
 		$('#btn-newword').click(function () {
-			$('#diag-newword').modal('show');
-		});
-		$('#btn-newword-confirm').click(function () {
-			//alert(6456);
-			$('#diag-newword').modal('hide');
-			parent.newWord($('#newword').val(),function(result){
-				if (result.success != 0) {
-					window.location.href = '/edit.html';
-				}
-				else {
-					$('.err-container').html(result.msg);
-					$('#diag-err').modal('show');
-				}
-			});
-
+			new DiagBuilder()
+			.title('新建词条')
+			.content('<input id="newword" type="text" class="form-control" placeholder="词条名" />')
+			.btn('新建',function(){
+				parent.newWord($('#newword').val(),function(result){
+					if (result.success != 0) {
+						window.location.href = '/edit.html';
+					}
+					else {
+						a.alert(result.msg,'错误');
+					}
+				});
+			},'btn-primary').show();
 		});
 	}
 	//--------------------------------------------------page list---------------------------------------
@@ -218,6 +222,15 @@ var Wikim = (function($){
 				cb(res);
 		});
 	}
+	PageList.prototype.newPage = function(name,cb){
+		return $.post('/api/new', {
+			type: 'page',
+			data: name
+		}, function (res) {
+			if(cb)
+				cb(res);
+		});
+	}
 	PageList.prototype.validateEvents = function(){
 		var parent = this;
 		$('.pages-button').click(function (e) {
@@ -229,22 +242,20 @@ var Wikim = (function($){
 			});
 		});
 		$('#btn-newpage').click(function () {
-			$('#diag-newpage').modal('show');
-		});
-		$('#btn-newpage-confirm').click(function () {
-			$('#diag-newpage').modal('hide');
-			$.post('/api/new', {
-				type: 'page',
-				data: $('#newpage').val()
-			}, function (res) {
-				if (res.success != 0) {
-					window.location.href = '/edit.html';
-				}
-				else {
-					$('.err-container').html(res.msg);
-					$('#diag-err').modal('show');
-				}
-			});
+			//$('#diag-newpage').modal('show');
+			new DiagBuilder()
+			.title('新建页面')
+			.content('<input id="newpage" type="text" class="form-control" placeholder="页面名称" />')
+			.btn('新建',function(){
+				parent.newPage($('#newpage').val(), function (res) {
+					if (res.success != 0) {
+						window.location.href = '/edit.html';
+					}
+					else {
+						Wikim.alert(res.msg, '错误');
+					}
+				});
+			}, 'btn-primary').show();
 		});
 	}
 	
@@ -290,6 +301,27 @@ var Wikim = (function($){
 			}
 		}
 	}
+
+	DraftList.prototype.newRedir = function(index,word,cb){
+		var parent = this;
+		return $.post('/api/newredir',{
+			key : word,
+			target : parent._drafts[index].identifier
+		},function(result){
+			if(cb)
+				cb(result);
+		});
+	}
+	DraftList.prototype.deleteRedir = function(index,i,cb){
+		var parent = this;
+		return $.post('/api/deleteredir',{
+			key : parent._drafts[index].redirs[i],
+			target : parent._drafts[index].identifier
+		},function(result){
+			if(cb)
+				cb(result);
+		});
+	}
 	
 
 	DraftList.prototype.redirTemplet = function(i){
@@ -306,7 +338,7 @@ var Wikim = (function($){
 						'</div>' +
 						'<div id="collapse' + i + '" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">' +
 							'<div class="panel-body" id="redir-container' + i + '">' +
-								'正在加载....' +
+								'正在加载...' +
 							'</div>' +
 						'</div>' +
 					'</div>' +
@@ -321,14 +353,25 @@ var Wikim = (function($){
 		if(this._drafts[index].type == 'word'){
 			var redir = this._drafts[index].redirs;
 			var s = '';
-			for(var i = 0;i < redir.length;i++){
-				s += 
-					'<div class="col-md-3 redir-item-container" data-index="' + index + '">' + 
-						redir[i] + 
-						'<a hidden="true" data-index="' + i + '" class="remove-redir-item">' +
-							'<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>' +
+			if(redir){
+				for(var i = 0;i < redir.length;i++){
+					s += 
+						'<div class="col-md-3 redir-item-container" data-index="' + index + '">' + 
+							redir[i] + 
+							'<a hidden="true" data-index="' + i + '" class="remove-redir-item">' +
+								'<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>' +
+							'</a>' +
+						'</div>';
+				}
+				s +=
+					'<div class="col-md-3" data-index="' + index + '">' +
+						'<a data-index="' + i + '" class="new-redir-item">' +
+							'<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>' +
 						'</a>' +
 					'</div>';
+			}
+			else{
+				s = '正在加载...';
 			}
 			$('#redir-container' + index).html(s);
 		}
@@ -386,6 +429,9 @@ var Wikim = (function($){
 				$('#file-list').html(list);
 				$('#file-content').html(content);
 			}
+			for(var i = 0;i < this._drafts.length;i++){
+				this.renderRedirItem(i);
+			}
 		}
 		this.updateButtonStatus();		
 	}
@@ -422,6 +468,7 @@ var Wikim = (function($){
 				parent._drafts.splice(index,1);
 				parent._currentdraft = 0;
 				parent.render();
+				parent.validateEventsOfRedirs();
 			}
 			if(cb)
 				cb(result);
@@ -439,6 +486,7 @@ var Wikim = (function($){
 				parent._drafts.splice(index,1);
 				parent._currentdraft = 0;
 				parent.render();
+				parent.validateEventsOfRedirs();
 			}
 			if(cb)
 				cb(result);
@@ -460,6 +508,45 @@ var Wikim = (function($){
 		});
 		$('.redir-item-container').mouseout(function(){
 			$(this).children().hide();
+		});
+		$('.new-redir-item').click(function(){
+			var index = $('#file-list .active a').attr('data-index');
+			new DiagBuilder()
+			.title('新重定向词条')
+			.content('<input id="newredir" type="text" class="form-control" placeholder="重定向名" />')
+			.btn('新建',function(){
+				var n = $('#newredir').val();
+				parent.newRedir(index,n,function(res){
+					if(res.success == 1){
+						parent._drafts[index].redirs.push(n);
+						parent.renderRedirItem(index);
+						parent.validateEventsOfRedirs();
+					}
+					else{
+						a.alert(res.msg,'错误');
+					}
+				});
+			},'btn-primary').show();
+		});
+		$('.remove-redir-item').click(function(){
+			var index = $('#file-list .active a').attr('data-index');
+			var i = $(this).attr('data-index');
+			new DiagBuilder()
+			.title('确认删除')
+			.content('确认删除重定向词条“' + parent._drafts[index].redirs[i] + '”？')
+			.btn('删除',function(){
+				parent.deleteRedir(index,i,function(res){
+					if(res.success == 1){
+						parent._drafts[index].splice(i,1);
+						parent.renderRedirItem(index);
+						parent.validateEventsOfRedirs();
+					}
+					else{
+						a.alert(res.msg,'错误');
+					}
+				});
+
+			},'btn-danger').show();
 		});
 	}
 	DraftList.prototype.validateEvents = function(){
@@ -581,14 +668,17 @@ var Wikim = (function($){
 		this._poscb = undefined;
 
 		this._btn = [];
+
+		this._s = '';
 	}
+	DiagBuilder._diagqueue = [];
+	
 	DiagBuilder.prototype.show = function(){
 		var parent = this;
 		var tbtn = '';
 		for(var i = 0;i < this._btn.length;i++){
 			tbtn += '<button data-index="' + i + '" type="button" class="diag-btn btn ' + this._btn[i].clazz + '" id="btn-pos' + i + '">' + this._btn[i].text +'</button>'
 		}
-
 		var s = 
 			'<div class="modal fade" id="diag-motal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">' +
 				'<div class="modal-dialog">' +
@@ -607,12 +697,29 @@ var Wikim = (function($){
 					'</div>' +
 				'</div>' +
 			'</div>';
-		$('#diag-container').html(s);
+		this._s = s;
+		DiagBuilder._diagqueue.push(this);
+
+		if(DiagBuilder._diagqueue.length == 1){
+			this._show_hard();
+		}
+	}
+	DiagBuilder.prototype._show_hard = function(){
+		var parent = this;
+		$('#diag-container').html(this._s);
+		$('#diag-motal').on('hidden.bs.modal',function(){
+			DiagBuilder._diagqueue.shift();
+			var d = DiagBuilder._diagqueue[0];
+			if(d){
+				d._show_hard();
+			}
+		});
+
 		$('#diag-motal').modal('show');
-		$('.diag-btn').click(function(){
+		$('.diag-btn').click(function () {
 			$('#diag-motal').modal('hide');
 			var index = $(this).attr('data-index');
-			if(parent._btn[index].cb){
+			if (parent._btn[index].cb) {
 				parent._btn[index].cb.call(this);
 			}
 		});

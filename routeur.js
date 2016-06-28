@@ -31,4 +31,6 @@ exports.initRoutes = function(server){
     server.addRoute('/api/delete',app.doDelete);
 
     server.addRoute('/api/export',app.doExport);
+
+    server.addRoute('/api/newredir',app.newRedir);
 }
