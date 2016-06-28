@@ -115,35 +115,10 @@
 	<script>
 		Wikim.getUser(function(result){
 			if(result.success != 0){
-				initEvents();
+				var controls = Wikim.getControls();
+				controls.validateEvents();
 			}
 		});
-
-		function initEvents(){
-			$('#btn-export-db').click(function(){
-				var $btn = $(this);
-				$btn.popover('show');
-				$btn.attr('data-content','正在导出……');
-				$.post('/api/export',{
-					what: 'maindb'
-				},function(result){
-					if(result.success != 0){
-						$btn.attr('data-content','导出完成！');
-						$btn.popover('show');
-						//alert('success');
-					}
-					else{
-						$btn.attr('data-content','导出失败：' + result.msg);
-						$btn.popover('show');
-					}
-				});
-			});
-		}
-
-		function err(msg){
-			$('.err-container').html(msg);
-			$('#diag-err').modal('show');
-		}
 			
 	</script>
 </body>

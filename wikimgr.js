@@ -148,6 +148,9 @@ WikiDB.prototype.getWordContentByName = function(name){
 WikiDB.prototype.getPageContentByName = function(name){
 	return this._pdb.pages[name];
 }
+WikiDB.prototype.getRedir = function(cle){
+	return this._pdb.ReDir[cle] || [];
+}
 
 var WikiUser = function(name,item){
 	this.name = name;
@@ -259,7 +262,7 @@ WikiUser.prototype.DeleteItem = function(type,identifier){
 	}
 }
 WikiUser.prototype.getRedir = function(cle){
-	return this._db.ReDir[cle] || [];
+	return this._db.getRedir(cle);
 }
 WikiUser.prototype.newRedirItem = function(key,target){
 	function hasTarget(a,t){

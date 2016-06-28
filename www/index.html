@@ -164,6 +164,8 @@
 
 		</div>
 
+		<div id="diag-container"></div>
+
 		<!-- dialogues -->
 		<div class="modal fade" id="diag-newword">
 			<div class="modal-dialog">
@@ -241,61 +243,8 @@
 					PageList.render();
 					PageList.validateEvents();
 				});
-				// Wikim.getAllPages(function(){
-				// 	$('.pages-button').click(function(e){
-				// 		var a = $(this);
-				// 		$.post('/edit',{
-				// 			type : 'page',
-				// 			data : a.html()
-				// 		},function(res){
-				// 			if(res.success){
-				// 				window.location.href = '/edit.html';
-				// 			}
-				// 		});
-				// 	});
-				// 	$('#btn-newpage').click(function(){
-				// 		$('#diag-newpage').modal('show');
-				// 	});
-				// 	$('#btn-newpage-confirm').click(function(){
-				// 		$('#diag-newpage').modal('hide');
-				// 		$.post('/new',{
-				// 			type : 'page',
-				// 			data : $('#newpage').val()
-				// 		},function(res){
-				// 			if(res.success != 0){
-				// 				window.location.href = '/edit.html';
-				// 			}
-				// 			else{
-				// 				$('.err-container').html(res.msg);
-				// 				$('#diag-err').modal('show');
-				// 			}
-				// 		});
-				// 	});
-				// });
-				// Wikim.getAllredir(function(){
-				// 	$('.redir-key').click(function(){
-				// 		if($(this).attr('id') !== editing.id){
-				// 			$('#editing-redir-container').parent().html(editing.otext);
-				// 			editing.otext = $(this).html();
-				// 			editing.id = $(this).attr('id');
-				// 			//$(this).html('<div id="editing-redir-container" class="input-group"><input class="form-control" id="editing-redir" type="text" value="' + editing.otext + '"/><span class="input-group-btn"><button type="button" class="btn btn-primary" id="btn-redir-commit">提交</button></span></div>');
-				// 			//$(this).html('<div id="editing-redir-container"><input class="form-control" id="editing-redir" type="text" value="' + editing.otext + '"/><button type="button" class="btn btn-primary" id="btn-redir-commit">提交</button></div>');
-				// 			$(this).html('<div id="editing-redir-container" class="input-group"><input class="form-control" id="editing-redir" type="text" value="' + editing.otext + '"/><span class="input-group-btn"><button type="button" class="btn btn-primary" id="btn-redir-commit">提交</button></span></div>');
-
-				// 		}
-				// 	});
-				// 	$('.redir-value').click(function(){
-				// 		if($(this).attr('id') !== editing.id){
-				// 			$('#editing-redir-container').parent().html(editing.otext);
-				// 			editing.otext = $(this).html();
-				// 			editing.id = $(this).attr('id');
-				// 			$(this).html('<div id="editing-redir-container" class="input-group"><input class="form-control" id="editing-redir" type="text" value="' + editing.otext + '"/><span class="input-group-btn"><button type="button" class="btn btn-primary" id="btn-redir-commit">提交</button></span></div>');
-				// 		}
-				// 	});
-				// });
 			}).error(function(e){
-				$('.err-container').html('网络貌似锁尔了');
-				$('#diag-err').modal('show');
+				Wikim.alert('网络貌似锁尔了','错误');
 			});
 		</script>
 </body>

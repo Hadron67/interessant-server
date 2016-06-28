@@ -105,26 +105,7 @@
 		</div>
 	</div>
 
-	<div class="modal fade" id="diag-delete-confirm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-		<div class="modal-dialog">
-			<div class="modal-content">
-				<div class="modal-header">
-					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-					<h4 class="modal-title" id="myModalLabel">确认删除</h4>
-				</div>
-				<div class="modal-body" id="delete-confirm-msg">
-					确认删除词条“锁尔”？注意，此操作不可逆。
-				</div>
-				<div class="modal-footer">
-					<button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-					<button type="button" class="btn btn-danger" id="btn-delete-confirm">确认删除</button>
-				</div>
-			</div>
-			<!-- /.modal-content -->
-		</div>
-		<!-- /.modal-dialog -->
-	</div>
-	<!-- /.modal -->
+	<div id="diag-container"></div>
 
 	<script src="js/jquery.min.js"></script>
 	<script src="js/bootstrap.min.js"></script>
@@ -132,10 +113,14 @@
 	<script>
 		Wikim.getUser(function(result){
 				if(result.success != 0){
-					var DraftList = Wikim.getDraftList();
-					DraftList.request(function(){
-						DraftList.render();
-						DraftList.validateEvents();
+					var draftList = Wikim.getDraftList();
+					draftList.request(function(){
+						draftList.render();
+						draftList.validateEvents();
+						draftList.requestRedirs(function(index){
+							draftList.renderRedirItem(index);
+							draftList.validateEventsOfRedirs();
+						});
 					});
 				}
 				else{
@@ -143,109 +128,6 @@
 					$('.btn-draftoptr').attr('disabled','disabled');
 				}
 			});
-			
-			// function refresh(){
-			// 	Wikim.getDrafts(function(result){
-			// 		$('.btn-draftoptr').attr('disabled','disabled');
-			// 		if(result.success != 0){
-			// 			if(Wikim.drafts.length > 0){
-			// 				$('.btn-draftoptr').removeAttr('disabled');
-			// 				initEvent();
-			// 			}
-			// 		}
-			// 		else{
-			// 			$('.btn-draftoptr').attr('disabled','true');
-			// 			$('.err-msg-container').html(result.msg);
-			// 		}
-			// 	});
-			// }
-
-			// function initEvent(){
-			// 	$('#btn-save').click(function(){
-			// 		var $btn = $(this);
-			// 		$btn.attr('data-content','保存中……');
-			// 		$btn.popover('show');
-			// 		var index = $('#file-list .active a').attr('data-index');
-			// 		var content = $('#file-content' + index).val();
-			// 		$.post('/updatedraft',{
-			// 			type : Wikim.drafts[index].type,
-			// 			identifier : Wikim.drafts[index].identifier,
-			// 			content : content
-			// 		},function(result){
-			// 			if(result.success != 0){
-			// 				$btn.attr('data-content','保存成功！');
-			// 				$btn.popover('show');
-			// 				//alert('success');
-			// 			}
-			// 			else{
-			// 				$btn.attr('data-content','保存失败：' + result.msg);
-			// 				$btn.popover('show');
-			// 			}
-			// 		});
-			// 	});
-			// 	$('.btn-close').tooltip();
-			// 	$('.btn-close').click(function(){
-			// 		var index = $('#file-list .active a').attr('data-index');
-			// 		$.post('/closedraft',{
-			// 			type : Wikim.drafts[index].type,
-			// 			identifier : Wikim.drafts[index].identifier
-			// 		},function(result){
-			// 			console.log(result);
-			// 			if(result.success != 0){
-			// 				refresh();
-			// 			}
-			// 		}).error(function(e){
-			// 			alert(e.toString());
-			// 		});
-			// 	});
-			// 	$('#btn-commit').click(function(){
-			// 		var $btn = $(this);
-			// 		$btn.attr('data-content','提交中……');
-			// 		$btn.popover('show');
-			// 		var index = $('#file-list .active a').attr('data-index');
-			// 		var content = $('#file-content' + index).val();
-			// 		$.post('/commitdraft',{
-			// 			type : Wikim.drafts[index].type,
-			// 			identifier : Wikim.drafts[index].identifier,
-			// 			content : content
-			// 		},function(result){
-			// 			if(result.success != 0){
-			// 				$btn.attr('data-content','提交成功！');
-			// 				$btn.popover('show');
-			// 			}
-			// 			else{
-			// 				$btn.attr('data-content','提交失败：' + result.msg);
-			// 				$btn.popover('show');
-			// 			}
-			// 		});
-			// 	});
-			// 	$('#btn-delete').click(function(){
-			// 		var index = $('#file-list .active a').attr('data-index');
-			// 		var t = '';
-			// 		if(Wikim.drafts[index].type == 'word'){
-			// 			t = '词条';
-			// 		}
-			// 		else if(Wikim.drafts[index].type == 'page'){
-			// 			t = '页面';
-			// 		}
-			// 		$('#delete-confirm-msg').html('确认删除' + t + '“' + Wikim.drafts[index].identifier + '”？注意，此操作不可逆');
-			// 		$('#diag-delete-confirm').modal('show');
-			// 	});
-			// 	$('#btn-delete-confirm').click(function(){
-			// 		$('#diag-delete-confirm').modal('hide');
-			// 		var index = $('#file-list .active a').attr('data-index');
-			// 		$.post('/delete',{
-			// 			type : Wikim.drafts[index].type,
-			// 			identifier : Wikim.drafts[index].identifier,
-			// 		},function(result){
-			// 			if(result.success != 0){
-			// 				Wikim.getDrafts(function(result){
-			// 					initEvent();
-			// 				});
-			// 			}
-			// 		});
-			// 	});
-			// }
 			
 	</script>
 </body>

@@ -24,7 +24,7 @@ var Wikim = (function($){
 					$('#user-info').dropdown('toggle');
 				});
 				$('#link-logout').click(function(){
-					$.post('/logout',{},function(result){
+					$.post('/api/logout',{},function(result){
 						if(result.success != 0){
 							window.location.href = '/login.html';
 						}
@@ -46,6 +46,7 @@ var Wikim = (function($){
 	a.WordList = undefined;
 	a.PageList = undefined;
 	a.DraftList = undefined;
+	a.Controls = undefined;
 
 	a.getWordList = function(){
 		if(!a.WordList)
@@ -61,6 +62,11 @@ var Wikim = (function($){
 		if(!a.DraftList)
 			a.DraftList = new DraftList();
 		return a.DraftList;
+	}
+	a.getControls = function(){
+		if(!a.Controls)
+			a.Controls = new Controls();
+		return a.Controls;
 	}
 
 	//--------------------------------word list----------------------------------------------
@@ -110,7 +116,17 @@ var Wikim = (function($){
 		}
 		$('#words-container').html(s);
 	}
+	WordList.prototype.newWord = function(word,cb){
+		return $.post('/api/new', {
+			type: 'word',
+			data: word
+		}, function (result) {
+			if(cb)
+				cb(result);
+		});
+	}
 	WordList.prototype.validateEvents = function(){
+		var parent = this;
 		function wordslinks(){
 			$('.words-item').click(function () {
 				var a = $(this);
@@ -127,12 +143,12 @@ var Wikim = (function($){
 		wordslinks();
 
 		$('#btn-search-words').click(function () {
-			WordList.render($('#search-word-form').val());
+			parent.render($('#search-word-form').val());
 			wordslinks();
 		});
 
 		$('#search-word-form').on('input', function () {
-			WordList.render($(this).val());
+			parent.render($(this).val());
 			wordslinks();
 		});
 		$('#btn-newword').click(function () {
@@ -141,10 +157,7 @@ var Wikim = (function($){
 		$('#btn-newword-confirm').click(function () {
 			//alert(6456);
 			$('#diag-newword').modal('hide');
-			$.post('/new', {
-				type: 'word',
-				data: $('#newword').val()
-			}, function (result) {
+			parent.newWord($('#newword').val(),function(result){
 				if (result.success != 0) {
 					window.location.href = '/edit.html';
 				}
@@ -153,6 +166,7 @@ var Wikim = (function($){
 					$('#diag-err').modal('show');
 				}
 			});
+
 		});
 	}
 	//--------------------------------------------------page list---------------------------------------
@@ -195,13 +209,20 @@ var Wikim = (function($){
 		}
 		$('#pages-list').html(s);
 	}
+	PageList.prototype.editPage = function (pname, cb) {
+		return $.post('/api/edit', {
+			type: 'page',
+			data: pname
+		}, function (res) {
+			if(cb)
+				cb(res);
+		});
+	}
 	PageList.prototype.validateEvents = function(){
+		var parent = this;
 		$('.pages-button').click(function (e) {
 			var a = $(this);
-			$.post('/edit', {
-				type: 'page',
-				data: a.html()
-			}, function (res) {
+			parent.editPage(a.html(),function(res){
 				if (res.success) {
 					window.location.href = '/edit.html';
 				}
@@ -212,7 +233,7 @@ var Wikim = (function($){
 		});
 		$('#btn-newpage-confirm').click(function () {
 			$('#diag-newpage').modal('hide');
-			$.post('/new', {
+			$.post('/api/new', {
 				type: 'page',
 				data: $('#newpage').val()
 			}, function (res) {
@@ -250,6 +271,69 @@ var Wikim = (function($){
 				cb(result);
 		});
 	}
+	DraftList.prototype._getRequestRedircb = function(i,cb){
+		var parent = this;
+		return function(result){
+			parent._drafts[i].redirs = result.result;
+			if (cb) {
+				cb(i, result);
+			}
+		}
+	}
+	DraftList.prototype.requestRedirs = function(cb){
+		var parent = this;
+		for(var i = 0;i < this._drafts.length;i++){
+			if(this._drafts[i].type == 'word'){
+				$.post('/api/getredir',{
+					word : parent._drafts[i].identifier
+				},this._getRequestRedircb(i,cb));
+			}
+		}
+	}
+	
+
+	DraftList.prototype.redirTemplet = function(i){
+		if(this._drafts[i].type == 'word'){
+			var ret =  
+				'<div class="row">' +
+					'<div class="panel panel-default">' +
+						'<div class="panel-heading" role="tab" id="headingOne">' +
+							'<h4 class="panel-title">' +
+								'<a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse' + i + '" aria-expanded="true" aria-controls="collapseOne">' +
+									'查看重定向' +
+								'</a>' +
+							'</h4>' +
+						'</div>' +
+						'<div id="collapse' + i + '" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">' +
+							'<div class="panel-body" id="redir-container' + i + '">' +
+								'正在加载....' +
+							'</div>' +
+						'</div>' +
+					'</div>' +
+				'</div>';
+			return ret;
+		}
+		else{
+			return '';
+		}
+	}
+	DraftList.prototype.renderRedirItem = function(index){
+		if(this._drafts[index].type == 'word'){
+			var redir = this._drafts[index].redirs;
+			var s = '';
+			for(var i = 0;i < redir.length;i++){
+				s += 
+					'<div class="col-md-3 redir-item-container" data-index="' + index + '">' + 
+						redir[i] + 
+						'<a hidden="true" data-index="' + i + '" class="remove-redir-item">' +
+							'<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>' +
+						'</a>' +
+					'</div>';
+			}
+			$('#redir-container' + index).html(s);
+		}
+	}
+
 	DraftList.prototype.render = function(){
 		if(this._status == 0){
 			if(this._drafts.length == 0){
@@ -291,8 +375,9 @@ var Wikim = (function($){
 								'</button>' +
 								'<button type="button" class="btn btn-default btn-preview">预览</button>' +
 							'</div>' +
+							this.redirTemplet(i) +
 							'<div class="row">' +
-								'<textarea id="file-content' + i + '" rows="25" class="input-group-lg">' + 
+								'<textarea id="file-content' + i + '" rows="25" class="input-group-lg form-control">' + 
 									this._drafts[i].content + 
 								'</textarea>' +
 							'</div>' +
@@ -368,6 +453,15 @@ var Wikim = (function($){
 			$('.btn-draftoptr').click(function(){});
 		}
 	}
+	DraftList.prototype.validateEventsOfRedirs = function(){
+		var parent = this;
+		$('.redir-item-container').mouseover(function(){
+			$(this).children().show();
+		});
+		$('.redir-item-container').mouseout(function(){
+			$(this).children().hide();
+		});
+	}
 	DraftList.prototype.validateEvents = function(){
 		var parent = this;
 		function draftcontrols(){
@@ -422,73 +516,133 @@ var Wikim = (function($){
 		$('#btn-delete').click(function () {
 			var index = $('#file-list .active a').attr('data-index');
 			var t = '';
-			if (Wikim.drafts[index].type == 'word') {
+			var b = new DiagBuilder();
+			if (parent._drafts[index].type == 'word') {
 				t = '词条';
 			}
-			else if (Wikim.drafts[index].type == 'page') {
+			else if (parent._drafts[index].type == 'page') {
 				t = '页面';
 			}
-			$('#delete-confirm-msg').html('确认删除' + t + '“' + Wikim.drafts[index].identifier + '”？注意，此操作不可逆');
-			$('#diag-delete-confirm').modal('show');
+			b.content('确认删除' + t + '“' + parent._drafts[index].identifier + '”？注意，此操作不可逆')
+			.btn('确认删除', function () {
+				parent.deleteDraft(index, function (result) {
+					if (result.success != 0) {
+						parent._drafts.splice(index, 1);
+						parent._currentdraft = 0;
+						parent.render();
+					}
+				});
+			}, 'btn-danger').show();
 		});
-		$('#btn-delete-confirm').click(function () {
-			$('#diag-delete-confirm').modal('hide');
-			var index = $('#file-list .active a').attr('data-index');
-			$.post('/api/delete', {
-				type: Wikim.drafts[index].type,
-				identifier: Wikim.drafts[index].identifier,
-			}, function (result) {
+	}
+
+	function Controls(){
+
+	}
+	Controls.prototype.exportMainDB = function(cb){
+		return $.post('/api/export', {
+			what: 'maindb'
+		}, function (result) {
+			if(cb){
+				cb(result);
+			}
+		});
+	}
+	Controls.prototype.validateEvents = function(){
+		var parent = this;
+		$('#btn-export-db').click(function () {
+			var $btn = $(this);
+			$btn.popover('show');
+			$btn.attr('data-content', '正在导出……');
+			parent.exportMainDB(function (result) {
 				if (result.success != 0) {
-					Wikim.getDrafts(function (result) {
-						initEvent();
-					});
+					$btn.attr('data-content', '导出完成！');
+					$btn.popover('show');
+				}
+				else {
+					$btn.attr('data-content', '导出失败：' + result.msg);
+					$btn.popover('show');
 				}
 			});
 		});
+
+		function err(msg) {
+			$('.err-container').html(msg);
+			$('#diag-err').modal('show');
+		}
 	}
-	
-	a.getDrafts = function(cb){
-		return $.post('/api/getdrafts',{},function(result){
-			if(result.success != 0){
-				a.drafts = result.drafts;
-				var list = '';
-				var content = '';
-				if(result.drafts.length == 0){
-					$('#file-list').html('<li role="presentation" class="active"><a href="#aaa" data-toggle="tab">默认标签</a></li>');
-					$('#file-content').html(
-						'<div class="container-fluid tab-pane fade in active" id="bbb">'
-							+'<div class="row">'
-								+'<div>没有正在编辑的词条</div>'
-							+'</div>'
-						+'</div>');
-				}
-				else{
-					for(var i = 0;i < result.drafts.length;i++){
-						var active = '';
-						var active2 = '';
-						if(i == result.current_draft){
-							active = 'active';
-							active2 = 'in active';
-						}
-						list += '<li role="presentation" class="' + active + '"><a href="#file' + i + '" data-toggle="tab" data-index="' + i + '">' 
-							+ result.drafts[i].identifier + '</a></li>';
-						content += '<div class="container-fluid tab-pane fade ' + active2 + '" id="file' + i + '">'
-										+ '<div class="row" style="padding-bottom:10px;">'
-											+ '<button type="button" class="btn btn-default btn-close" data-toggle="tooltip" data-placement="top" title="关闭前注意保存">关闭</button>'
-											+ '<button type="button" class="btn btn-default btn-preview">预览</button>'
-										+ '</div>'
-										+ '<div class="row">'
-											+ '<textarea id="file-content' + i + '" rows="25" class="input-group-lg">' + result.drafts[i].content + '</textarea>'
-										+ '</div>'
-								+ '</div>';
-					}
-					$('#file-list').html(list);
-					$('#file-content').html(content);
-				}
+
+	function DiagBuilder(){
+		this._content = '请确认';
+		this._title = '确认信息';
+		this._text_pos = undefined;
+		this._text_neg = '取消';
+		this._class_pos = 'btn-primary';
+		this._poscb = undefined;
+
+		this._btn = [];
+	}
+	DiagBuilder.prototype.show = function(){
+		var parent = this;
+		var tbtn = '';
+		for(var i = 0;i < this._btn.length;i++){
+			tbtn += '<button data-index="' + i + '" type="button" class="diag-btn btn ' + this._btn[i].clazz + '" id="btn-pos' + i + '">' + this._btn[i].text +'</button>'
+		}
+
+		var s = 
+			'<div class="modal fade" id="diag-motal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">' +
+				'<div class="modal-dialog">' +
+					'<div class="modal-content">' +
+						'<div class="modal-header">' +
+							'<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>' +
+							'<h4 class="modal-title" id="myModalLabel">' + this._title + '</h4>' +
+						'</div>' +
+						'<div class="modal-body" id="delete-confirm-msg">' +
+							this._content +
+						'</div>' +
+						'<div class="modal-footer">' +
+							'<button type="button" class="btn btn-default" data-dismiss="modal">' + this._text_neg + '</button>' +
+							tbtn + 
+						'</div>' +
+					'</div>' +
+				'</div>' +
+			'</div>';
+		$('#diag-container').html(s);
+		$('#diag-motal').modal('show');
+		$('.diag-btn').click(function(){
+			$('#diag-motal').modal('hide');
+			var index = $(this).attr('data-index');
+			if(parent._btn[index].cb){
+				parent._btn[index].cb.call(this);
 			}
-			if(cb)
-				cb(result);
 		});
 	}
+	DiagBuilder.prototype.title = function(t){
+		this._title = t;
+		return this;
+	}
+	DiagBuilder.prototype.content = function(c){
+		this._content = c;
+		return this;
+	}
+	DiagBuilder.prototype.negtext = function(t){
+		this._text_neg = t;
+		return this;
+	}
+
+	DiagBuilder.prototype.btn = function(text,cb,clazz){
+		this._btn.push({
+			text : text,
+			cb : cb,
+			clazz : clazz || 'btn-default'
+		});
+		return this;
+	}
+
+	a.alert = function(content,title){
+		title = title || '注意';
+		new DiagBuilder().title(title).content(content).show();
+	}
+
 	return a;
 })(jQuery);

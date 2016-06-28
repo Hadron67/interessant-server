@@ -1,3 +1,4 @@
+'use strict';
 
 function checkArg(data, array) {
     for (var i in array) {
@@ -226,5 +227,15 @@ exports.doExport = function(request,response){
                 });
                 break;
         }
+    }
+}
+
+exports.getRedir = function(request,response){
+    if(!checkArg(request.POST,['word'])){
+        response.err('invalid arguments').end();
+    }
+    else{
+        var redir = this.DB.getRedir(request.POST['word']);
+        response.addjson('result',redir).ok().end();
     }
 }
