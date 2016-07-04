@@ -33,4 +33,10 @@ exports.initRoutes = function(server){
     server.addRoute('/api/export',app.doExport);
 
     server.addRoute('/api/newredir',app.newRedir);
+
+    server.addRoute('/api/deleteredir',app.deleteRedir);
+
+    server.addRoute('/api/getimages',app.getImgs);
+
+    server.addRoute('/api/uploadimage',app.uploadImg);
 }

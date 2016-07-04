@@ -66,13 +66,50 @@
 		</div>
 	</nav>
 
+	<div class="container-fluid">
+		<div class="row" style="margin-left:0;margin-right:0;">
+			<div class="col-md-2 well">
+				<ul class="nav nav-pills nav-stacked">
+					<li role="presentation" class="active"><a href="#words" data-toggle="tab">图片</a></li>
+					<li role="presentation"><a href="#pages" data-toggle="tab">文件</a></li>
+				</ul>
+			</div>
+			<div class="col-md-9 container-fluid">
+				<div class="row" style="margin-bottom:10;">
+					<div class="col-md-9">
+						<button class="btn btn-primary" id="btn-upload-img">
+							<span class="glyphicon glyphicon-cloud-upload"></span>
+							上传图片
+						</button>
+					</div>
+				</div>
+				<div class="row" id="img-container"></div>
+				
+			</div>
+		</div>
+	</div>
 	
+	<div id="diag-container"></div>
 
 	<script src="js/jquery.min.js"></script>
 	<script src="js/bootstrap.min.js"></script>
-	<script src="js/mgr.js"></script>
+	<script src="js/jquery.form.min.js"></script>
+	<script src="js/mgr.resource.js"></script>
 	<script>
-		
+		(function(){
+			'use strict';
+			Wikim.getUser(function(result){
+				if(result.success == 0){
+					Wikim.alert('还没登录，请登录后编辑','请登录');
+					//window.location.href = '/login.html';
+				}
+				var rescon = Wikim.getResControl();
+				rescon.requestImg(function(){
+					rescon.render();
+					rescon.validateEvents();
+				});
+			});
+		})();
 			
 	</script>
 </body>

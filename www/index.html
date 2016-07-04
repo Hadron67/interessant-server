@@ -166,86 +166,39 @@
 
 		<div id="diag-container"></div>
 
-		<!-- dialogues -->
-		<div class="modal fade" id="diag-newword">
-			<div class="modal-dialog">
-				<div class="modal-content">
-				<div class="modal-header">
-					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-					<h4 class="modal-title">新建词条</h4>
-				</div>
-				<div class="modal-body">
-					<input id="newword" type="text" class="form-control" placeholder="词条名" />
-				</div>
-				<div class="modal-footer">
-					<button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-					<button id="btn-newword-confirm" type="button" class="btn btn-primary">新建</button>
-				</div>
-				</div><!-- /.modal-content -->
-			</div><!-- /.modal-dialog -->
-		</div><!-- /.modal -->
-
-		<div class="modal fade" id="diag-newpage">
-			<div class="modal-dialog">
-				<div class="modal-content">
-				<div class="modal-header">
-					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-					<h4 class="modal-title">新建页面</h4>
-				</div>
-				<div class="modal-body">
-					<input id="newpage" type="text" class="form-control" placeholder="页面名称" />
-				</div>
-				<div class="modal-footer">
-					<button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-					<button id="btn-newpage-confirm" type="button" class="btn btn-primary">新建</button>
-				</div>
-				</div><!-- /.modal-content -->
-			</div><!-- /.modal-dialog -->
-		</div><!-- /.modal -->
-
-		<div class="modal fade" id="diag-err">
-			<div class="modal-dialog">
-				<div class="modal-content">
-				<div class="modal-header">
-					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-					<h4 class="modal-title">错误</h4>
-				</div>
-				<div class="modal-body err-container">
-					出错了，请刷新页面
-				</div>
-				<div class="modal-footer">
-					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
-				</div>
-				</div><!-- /.modal-content -->
-			</div><!-- /.modal-dialog -->
-		</div><!-- /.modal -->
 
 		<script src="js/jquery.min.js"></script>
 		<script src="js/bootstrap.min.js"></script>
-		<script src="js/mgr.js"></script>
+		<script src="js/mgr.wiki.js"></script>
 		<script>
-			var editing = {
-				otext: '',
-				id: null
-			};
-			Wikim.getUser(function(result){
-				if(result.success == 0){
-					//window.location.href = '/login.html';
-				}
-				var WordList = Wikim.getWordList();
-				WordList.request(function(){
-					WordList.render();
-					WordList.validateEvents();
-				});
+			(function(){
+				'use strict';
+				var editing = {
+					otext: '',
+					id: null
+				};
+				Wikim.getUser(function(result){
+					if(result.success == 0){
+						Wikim.alert('还没登录，请登录后编辑','请登录');
+						//window.location.href = '/login.html';
+						return;
+					}
+					var WordList = Wikim.getWordList();
+					WordList.request(function(){
+						WordList.render();
+						WordList.validateEvents();
+					});
 
-				var PageList = Wikim.getPageList();
-				PageList.request(function(){
-					PageList.render();
-					PageList.validateEvents();
+					var PageList = Wikim.getPageList();
+					PageList.request(function(){
+						PageList.render();
+						PageList.validateEvents();
+					});
+				}).error(function(e){
+					Wikim.alert('网络貌似锁尔了','错误');
 				});
-			}).error(function(e){
-				Wikim.alert('网络貌似锁尔了','错误');
-			});
+			})();
+			
 		</script>
 </body>
 

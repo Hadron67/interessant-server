@@ -9,6 +9,7 @@ var crypto = require('crypto');
 
 var wmgr = require('./wikimgr.js');
 var routeur = require('./routeur.js');
+var bparser = require('./bparser.js');
 
 var contentTypes = {
   ".css": "text/css",
@@ -31,6 +32,18 @@ var contentTypes = {
   ".xml": "text/xml",
   '.cdf': 'application/vnd.wolfram.cdf.text'
 };
+
+function parseContentType(ctype){
+  var p = ctype.split('; ');
+  var c = {
+    'content-type' :p[0],
+  };
+  for(var i = 1;i < p.length;i++){
+    var parts = p[i].split('=');
+    c[parts[0].trim()] = (parts[1] || '').trim();
+  }
+  return c;
+}
 function Request(r) {
   var cookies = {};
   r.headers.cookie && r.headers.cookie.split(';').forEach(function (Cookie) {
@@ -40,17 +53,19 @@ function Request(r) {
   this.cookies = cookies;
   this.method = r.method;
   this._r = r;
+  this.GET = {};
   this.POST = {};
+  this.FILES = {};
   this.session = {};
+  this.content_type = r.headers['content-type'] && parseContentType(r.headers['content-type']) || {'content-type':'text/plain'};
 }
 Request.prototype.listen = function (cb) {
-  var a = '';
+  this.content_type && console.log(this.content_type);
   var parent = this;
-  this._r.addListener('data', function (pdata) {
-    a += pdata;
-  }).addListener('end', function (pdata) {
-    parent.POST = qs.parse(a);
-    if (cb)
+  bparser.doParse(this.content_type['content-type'],this._r,function(post,files,err){
+    parent.POST = post || {};
+    parent.FILES = files || {};
+    if(cb)
       cb.call(parent);
   });
 }

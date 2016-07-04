@@ -23,6 +23,7 @@ var WikiDB = function(){
 WikiDB.prototype.open = function(){
 	this._pdb = JSON.parse(fs.readFileSync(this.config.pdb,'utf-8'));
 	this._userdb = JSON.parse(fs.readFileSync(this.config.userdb,'utf-8'));
+	
 }
 WikiDB.prototype._exportMainDB = function(cb){
 	var edb = 'var pDB={ReDir:{';
@@ -163,8 +164,8 @@ WikiDB.prototype.addRedir = function(key,target){
 		return false;
 	}
 
-	if(!this._pdb.ReDir[key]){
-		this._pdb.ReDir[key] = [];
+	if(!this._pdb.ReDir[target]){
+		this._pdb.ReDir[target] = [];
 		this._pdbchanged = true;
 	}
 	if (!hasTarget(this._pdb.ReDir[target], key)) {
@@ -177,13 +178,41 @@ WikiDB.prototype.deleteRedir = function(key,target){
 	if(item){
 		for(var i = 0;i < item.length;i++){
 			if(item[i] == key){
-				item.splice(index,1);
+				item.splice(i,1);
 				this._pdbchanged = true;
 				return;
 			}
 		}
 	}
 }
+WikiDB.prototype.getImageList = function(){
+	return this._pdb.resource.image;
+}
+WikiDB.prototype.imageExists = function(name){
+	var d = this._pdb.resource.image;
+	for(var i = 0;i < d.length;i++){
+		if(d[i].name == name){
+			return true;
+		}
+	}
+	return false;
+}
+WikiDB.prototype.addImage = function(fname,desc,tmppath,cb){
+	var parent = this;
+	fs.rename(tmppath,this.config['image-res-dir'] + fname,function(e){
+		if(e === null){
+			parent._pdb.resource.image.push({
+				name: fname,
+				url: '/res/image/' + fname,
+				desc: desc
+			});
+			parent._pdbchanged = true;
+		}
+		if(cb)
+			cb(e);
+	});
+}
+
 
 var WikiUser = function(name,item){
 	this.name = name;
@@ -306,6 +335,8 @@ WikiUser.prototype.deleteRedirItem = function(key,target){
 WikiUser.prototype.exportMainDB = function(cb){
 	this._db._exportMainDB(cb);
 }
-
+WikiUser.prototype.getImages = function(){
+	return this._db.getImageList();
+}
 exports.WikiDB = WikiDB;
 exports.WikiUser = WikiUser;

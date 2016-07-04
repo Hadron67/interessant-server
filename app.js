@@ -1,5 +1,7 @@
 'use strict';
 
+var fs = require('fs');
+
 function checkArg(data, array) {
     for (var i in array) {
         if (data[array[i]] == undefined)
@@ -278,6 +280,68 @@ exports.deleteRedir = function(request,response){
         user.deleteRedirItem(request.POST['key'],request.POST['target']);
         this.DB.checkBackup(function(){
             response.ok().end();
+        });
+    }
+}
+exports.getImgs = function(request,response){
+    var user = request.session['user'];
+    if (!user) {
+        response.err("还没登录，统统锁尔").end();
+    }
+    else{
+        var ret = user.getImages();
+        response.addjson('result',ret).ok().end();
+    }
+}
+exports.uploadImg = function(request,response){
+    
+    function deleteFile(cb){
+        if(request.FILES['file'] == void 0){
+            cb();
+        }
+        else
+            fs.unlink(request.FILES['file'].path,function(e){
+                cb(e);
+            });
+    }
+
+    console.log('file upload');
+    var user = request.session['user'];
+    if (!user) {
+        deleteFile(function(){
+            response.err("还没登录，统统锁尔").end();
+        });
+    }
+    else if(!checkArg(request.POST,['fname','desc'])){
+        deleteFile(function(){
+            response.err("invalid arguments").end();
+        });
+    }
+    else if(request.POST['fname'] == '' || request.POST['desc'] == ''){
+        deleteFile(function(){
+            response.err("锁尔空白的文件名或描述").end();
+        });
+    }
+    else if(request.FILES['file'] == void 0){
+        response.err("文件喃").end();
+    }
+    else{
+        if(this.DB.imageExists(request.POST['fname'])){
+            deleteFile(function(){
+                response.err('文件“' + request.POST['fname'] + '”已经存在').end();
+            });
+            return;
+        }
+        var parent = this;
+        this.DB.addImage(request.POST['fname'],request.POST['desc'],request.FILES['file'].path,function(e){
+            if(e === null){
+                parent.DB.checkBackup(function(){
+                    response.ok().end();
+                });
+            }
+            else{
+                response.err('内部错误：' + e).end();
+            }
         });
     }
 }

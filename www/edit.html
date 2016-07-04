@@ -109,7 +109,7 @@
 
 	<script src="js/jquery.min.js"></script>
 	<script src="js/bootstrap.min.js"></script>
-	<script src="js/mgr.js"></script>
+	<script src="js/mgr.edit.js"></script>
 	<script>
 		Wikim.getUser(function(result){
 				if(result.success != 0){
@@ -119,13 +119,14 @@
 						draftList.validateEvents();
 						draftList.requestRedirs(function(index){
 							draftList.renderRedirItem(index);
-							draftList.validateEventsOfRedirs();
+							draftList.validateEventsOfRedirs(index);
 						});
 					});
 				}
 				else{
 					$('.err-msg-container').html(result.msg);
 					$('.btn-draftoptr').attr('disabled','disabled');
+					Wikim.alert('还没登录，请登录后查看或编辑','请登录');
 				}
 			});
 			
