@@ -39,4 +39,6 @@ exports.initRoutes = function(server){
     server.addRoute('/api/getimages',app.getImgs);
 
     server.addRoute('/api/uploadimage',app.uploadImg);
+
+    server.addRoute('/api/getimage',app.getImg);
 }

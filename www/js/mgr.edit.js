@@ -294,7 +294,7 @@ var Wikim = (function($){
 	}
 	DraftList.prototype.validateEventsOfRedirs = function(index){
 		var parent = this;
-		var additional = index != undefined ? '[data-word-index="' + index + '"]' : '';
+		var additional = index !== undefined ? '[data-word-index="' + index + '"]' : '';
 
 		$('.redir-item-container' + additional).mouseover(function(){
 			$(this).children().show();
@@ -319,6 +319,7 @@ var Wikim = (function($){
 						a.alert(res.msg,'错误');
 					}
 				});
+				return true;
 			},'btn-primary').show();
 		});
 		$('.remove-redir-item' + additional).click(function(){
@@ -338,7 +339,7 @@ var Wikim = (function($){
 						a.alert(res.msg,'错误');
 					}
 				});
-
+				return true;
 			},'btn-danger').show();
 		});
 	}
@@ -415,8 +416,11 @@ var Wikim = (function($){
 						parent._drafts.splice(index, 1);
 						parent._currentdraft = 0;
 						parent.render();
+						draftcontrols();
+						parent.validateEventsOfRedirs();
 					}
 				});
+				return true;
 			}, 'btn-danger').show();
 		});
 	}
@@ -480,11 +484,12 @@ var Wikim = (function($){
 
 		$('#diag-motal').modal('show');
 		$('.diag-btn').click(function () {
-			$('#diag-motal').modal('hide');
 			var index = $(this).attr('data-index');
 			if (parent._btn[index].cb) {
-				parent._btn[index].cb.call(this);
+				parent._btn[index].cb.call(this) && $('#diag-motal').modal('hide');
 			}
+			else
+				$('#diag-motal').modal('hide');
 		});
 	}
 	DiagBuilder.prototype.title = function(t){

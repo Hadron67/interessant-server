@@ -345,3 +345,13 @@ exports.uploadImg = function(request,response){
         });
     }
 }
+
+exports.getImg = function(request,response){
+    if(!checkArg(request.POST,['fname'])){
+        response.err('invalid arguments').end();
+    }
+    else{
+        var img = this.DB.getImage(request.POST['fname']);
+        response.addjson('result',img).ok().end();
+    }
+}

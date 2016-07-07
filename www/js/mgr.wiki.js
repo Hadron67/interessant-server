@@ -159,6 +159,7 @@ var Wikim = (function($){
 						a.alert(result.msg,'错误');
 					}
 				});
+				return true;
 			},'btn-primary').show();
 		});
 	}
@@ -244,6 +245,7 @@ var Wikim = (function($){
 						Wikim.alert(res.msg, '错误');
 					}
 				});
+				return true;
 			}, 'btn-primary').show();
 		});
 	}
@@ -308,11 +310,12 @@ var Wikim = (function($){
 
 		$('#diag-motal').modal('show');
 		$('.diag-btn').click(function () {
-			$('#diag-motal').modal('hide');
 			var index = $(this).attr('data-index');
 			if (parent._btn[index].cb) {
-				parent._btn[index].cb.call(this);
+				parent._btn[index].cb.call(this) && $('#diag-motal').modal('hide');
 			}
+			else
+				$('#diag-motal').modal('hide');
 		});
 	}
 	DiagBuilder.prototype.title = function(t){

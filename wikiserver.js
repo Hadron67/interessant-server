@@ -60,7 +60,7 @@ function Request(r) {
   this.content_type = r.headers['content-type'] && parseContentType(r.headers['content-type']) || {'content-type':'text/plain'};
 }
 Request.prototype.listen = function (cb) {
-  this.content_type && console.log(this.content_type);
+
   var parent = this;
   bparser.doParse(this.content_type['content-type'],this._r,function(post,files,err){
     parent.POST = post || {};

@@ -87,13 +87,16 @@ var Wikim = (function($,undefined){
         return s;
     }
 	function UploadingImg(filename,description){
-
+		this.filename = filename;
+		thid.description = description;
+		this._id = UploadingImg._index++;
 	}
 	_extends(UploadingImg,ImgItem);
+	UploadingImg._index = 0;
 	UploadingImg.prototype.getRender = function(){
 		var s = 
             '<div class="thumbnail">' +
-                '<div class="progress">'
+                '<div class="progress">' +
 					'<div data-fname="' + this.filename +  '" class="progress-upload-img progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" style="width: 45%">' +
 						'<span class="sr-only">45% Complete</span>' +
 					'</div>' +
@@ -104,7 +107,7 @@ var Wikim = (function($,undefined){
                         this.description +
                     '</p>' +
                     '<p>' +
-                        '<a href="#" data-fname="' + this.filename +  '" class="btn btn-default btn-img-options" role="button">取消上传</a> ' +
+                        '<a href="#" data-fname="' + this.filename +  '" class="btn btn-default" role="button">取消上传</a> ' +
                     '</p>' +
                 '</div>' +
             '</div>';
@@ -115,6 +118,7 @@ var Wikim = (function($,undefined){
 		$p.attr('aria-valuenow',p);
 		$p.children.html(p + '% Complete');
 	}
+	
 	
 
     function ResControl(){
@@ -137,7 +141,7 @@ var Wikim = (function($,undefined){
     }
     ResControl.prototype.render = function(){
         var s = '';
-        for(var i = 0;i < this._imgs.length;i++){
+        for(var i = this._imgs.length - 1;i >= 0;i--){
             s += 
                 '<div class="col-sm-6 col-md-3">' +
                     this._imgs[i].getRender() +
@@ -147,20 +151,28 @@ var Wikim = (function($,undefined){
     }
 	ResControl.prototype.validateEvents = function(){
 		$('#btn-upload-img').click(function(){
-			new UploadImgDiag(function(result){
-				if(result.success != 0){
-
+			new UploadImgDiag()
+			.success(function(result){
+				if(result.success == 1){
+					a.alert('上传完成');
 				}
 				else{
 					a.alert(result.msg,'错误');
 				}
-			}).show();
+			})
+			.show();
 			
 		});
 	}
 
-	function UploadImgDiag(cb){
-		this._builder = new DiagBuilder()
+	function UploadImgDiag(){
+		this._cb_before = null;
+		this._cb_success = null;
+		this._cb_progress = null;
+	}
+	UploadImgDiag.prototype.show = function(){
+		var parent = this;
+		new DiagBuilder()
 			.title('上传图片')
 			.content(
 				'<form id="upload-img" method="post" action="/api/uploadimage" enctype="multipart/form-data">' +
@@ -179,14 +191,37 @@ var Wikim = (function($,undefined){
 				'</form>'
 			)
 			.btn('上传',function(){
-				$('#upload-img').ajaxSubmit(function(result){
-					if(cb)
-						cb(result);
+				$('#upload-img').ajaxSubmit({
+					dataType: 'json',
+					beforeSubmit: function(){
+						if(parent._cb_before){
+							return parent._cb_before($('#img-filename').val(),$('#img-description').val());
+						}
+						else 
+							return true;
+					},
+					success: function(result){
+						parent._cb_success && parent._cb_success(result);
+					},
+					uploadProgress: function (event, position, total, percentComplete) {
+						console.log(percentComplete);
+						parent._cb_progress && parent._cb_progress(percentComplete);
+					}
 				});
-			},'btn-primary');
+				return true;
+			},'btn-primary').show();
 	}
-	UploadImgDiag.prototype.show = function(){
-		this._builder.show();
+	UploadImgDiag.prototype.before = function(cb){
+		this._cb_before = cb;
+		return this;
+	}
+	UploadImgDiag.prototype.success = function(cb){
+		this._cb_success = cb;
+		return this;
+	}
+	UploadImgDiag.prototype.progress = function(cb){
+		this._cb_progress = cb;
+		return this;
 	}
 
 
@@ -248,11 +283,12 @@ var Wikim = (function($,undefined){
 
 		$('#diag-motal').modal('show');
 		$('.diag-btn').click(function () {
-			$('#diag-motal').modal('hide');
 			var index = $(this).attr('data-index');
 			if (parent._btn[index].cb) {
-				parent._btn[index].cb.call(this);
+				parent._btn[index].cb.call(this) && $('#diag-motal').modal('hide');
 			}
+			else
+				$('#diag-motal').modal('hide');
 		});
 	}
 	DiagBuilder.prototype.title = function(t){

@@ -188,6 +188,15 @@ WikiDB.prototype.deleteRedir = function(key,target){
 WikiDB.prototype.getImageList = function(){
 	return this._pdb.resource.image;
 }
+WikiDB.prototype.getImage = function(fname){
+	var p = this._pdb.resource.image;
+	for(var i = 0;i < p.length;i++){
+		if(fname == p[i].name){
+			return p[i];
+		}
+	}
+	return undefined;
+}
 WikiDB.prototype.imageExists = function(name){
 	var d = this._pdb.resource.image;
 	for(var i = 0;i < d.length;i++){
